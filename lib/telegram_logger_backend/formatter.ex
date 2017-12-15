@@ -33,15 +33,6 @@ defmodule TelegramLoggerBackend.Formatter do
   # Private
 
   defp format_event({sender, %{message: msg, level: level, metadata: metadata}}) do
-    msg =
-      msg
-      |> String.split("\n")
-      |> (fn
-            [title, rest] -> ["*#{title}*", rest]
-            other -> other
-          end).()
-      |> Enum.join("\n")
-
     fields =
       Enum.map(metadata ++ [level: level], fn {k, v} ->
         "#{k |> to_string() |> String.capitalize()}: #{inspect(v)}"

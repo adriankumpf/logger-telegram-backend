@@ -5,8 +5,10 @@ defmodule TelegramLoggerBackend.Formatter do
 
   alias TelegramLoggerBackend.Logger
 
+  @name __MODULE__
+
   def start_link([min_demand, max_demand]) do
-    GenStage.start_link(__MODULE__, {min_demand, max_demand}, name: __MODULE__)
+    GenStage.start_link(__MODULE__, {min_demand, max_demand}, name: @name)
   end
 
   # Callbacks
@@ -22,8 +24,8 @@ defmodule TelegramLoggerBackend.Formatter do
   def handle_events(events, _from, state) do
     formatted_events =
       events
-      |> Enum.map(fn {url, event} -> {url, format_event(event)} end)
       |> Enum.reverse()
+      |> Enum.map(&format_event/1)
 
     {:noreply, formatted_events, state}
   end
@@ -31,10 +33,20 @@ defmodule TelegramLoggerBackend.Formatter do
   # Private
 
   defp format_event(%{message: msg, level: level, metadata: metadata}) do
+    msg =
+      msg
+      |> String.split("\n")
+      |> (fn
+            [title, rest] -> ["*#{title}*", rest]
+            other -> other
+          end).()
+      |> Enum.join("\n")
+
     fields =
       Enum.map(metadata ++ [level: level], fn {k, v} ->
         "#{k |> to_string() |> String.capitalize()}: #{inspect(v)}"
-      end)  |> Enum.join("\n")
+      end)
+      |> Enum.join("\n")
 
     """
     *#{msg}*

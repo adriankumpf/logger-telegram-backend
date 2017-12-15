@@ -4,6 +4,7 @@ defmodule TelegramLoggerBackend.Sender do
   use GenStage
 
   alias TelegramLoggerBackend.Formatter
+  alias TelegramLoggerBackend.Sender.Telegram
 
   @name __MODULE__
 
@@ -26,13 +27,7 @@ defmodule TelegramLoggerBackend.Sender do
   end
 
   defp process_events([event | events], state) do
-    :ok = send_message(event)
+    :ok = Telegram.send_message(event)
     process_events(events, state)
-  end
-
-  defp send_message({chat_id, json}, retries_left \\ 5) do
-    with {:ok, _msg} <- Nadia.send_message(chat_id, json, [disable_notification: true, parse_mode: "Markdown"]) do
-      :ok
-    end
   end
 end

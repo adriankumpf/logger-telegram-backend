@@ -53,17 +53,16 @@ defmodule TelegramLoggerBackend do
   end
 
   defp init(config, state) do
-    chat_id = Keyword.get(config, :chat_id)
     level = Keyword.get(config, :level)
     metadata = Keyword.get(config, :metadata, @default_metadata) |> configure_metadata()
 
-    %{state | chat_id: chat_id, metadata: metadata, level: level}
+    %{state | metadata: metadata, level: level}
   end
 
   defp configure_metadata(:all), do: :all
   defp configure_metadata(metadata), do: Enum.reverse(metadata)
 
-  defp log_event(level, msg, ts, md, %{metadata: keys, chat_id: chat_id}) do
+  defp log_event(level, msg, ts, md, %{metadata: keys}) do
     event = %{
       level: level,
       message: msg,
@@ -71,7 +70,7 @@ defmodule TelegramLoggerBackend do
       timestamp: ts
     }
 
-    TelegramLoggerBackend.Logger.add_event({chat_id, event})
+    TelegramLoggerBackend.Logger.add_event(event)
   end
 
   defp take_metadata(metadata, :all), do: metadata

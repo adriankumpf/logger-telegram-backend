@@ -6,11 +6,9 @@ defmodule TelegramLoggerBackend.Application do
   alias TelegramLoggerBackend.{Formatter, Logger, Sender}
 
   def start(_type, _args) do
-    import Supervisor.Spec, warn: false
-
     children = [
       Logger,
-      {Formatter, [0, 10]},
+      {Formatter, [5, 10]},
       {Sender, [0, 5]}
     ]
 

@@ -32,7 +32,7 @@ defmodule TelegramLoggerBackend.Formatter do
 
   # Private
 
-  defp format_event(%{message: msg, level: level, metadata: metadata}) do
+  defp format_event({sender, %{message: msg, level: level, metadata: metadata}}) do
     msg =
       msg
       |> String.split("\n")
@@ -48,11 +48,13 @@ defmodule TelegramLoggerBackend.Formatter do
       end)
       |> Enum.join("\n")
 
-    """
+    text = """
     *#{msg}*
     ```plain
     #{fields}
     ```
     """
+
+    {sender, text}
   end
 end

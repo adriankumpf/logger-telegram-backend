@@ -43,9 +43,12 @@ defmodule TelegramLoggerBackend do
 
   @behaviour :gen_event
 
-  defstruct level: nil, metadata: nil
+  defstruct [:level, :metadata, :sender]
+
+  alias TelegramLoggerBackend.Sender.Telegram
 
   @default_metadata [:line, :function, :module, :application, :file]
+  @default_sender Telegram
 
   # Callbacks
 
@@ -97,14 +100,15 @@ defmodule TelegramLoggerBackend do
   defp init(config, state) do
     level = Keyword.get(config, :level)
     metadata = Keyword.get(config, :metadata, @default_metadata) |> configure_metadata()
+    sender = Keyword.get(config, :sender, @default_sender)
 
-    %{state | metadata: metadata, level: level}
+    %{state | metadata: metadata, level: level, sender: sender}
   end
 
   defp configure_metadata(:all), do: :all
   defp configure_metadata(metadata), do: Enum.reverse(metadata)
 
-  defp log_event(level, msg, ts, md, %{metadata: keys}) do
+  defp log_event(level, msg, ts, md, %{metadata: keys, sender: sender}) do
     event = %{
       level: level,
       message: msg,
@@ -112,7 +116,7 @@ defmodule TelegramLoggerBackend do
       timestamp: ts
     }
 
-    TelegramLoggerBackend.Logger.add_event(event)
+    TelegramLoggerBackend.Logger.add_event({sender, event})
   end
 
   defp take_metadata(metadata, :all), do: metadata

@@ -4,7 +4,6 @@ defmodule TelegramLoggerBackend.Sender do
   use GenStage
 
   alias TelegramLoggerBackend.Formatter
-  alias TelegramLoggerBackend.Sender.Telegram
 
   @name __MODULE__
 
@@ -26,8 +25,8 @@ defmodule TelegramLoggerBackend.Sender do
     {:noreply, [], state}
   end
 
-  defp process_events([event | events], state) do
-    :ok = Telegram.send_message(event)
+  defp process_events([{sender, text} | events], state) do
+    :ok = apply(sender, :send_message, [text])
     process_events(events, state)
   end
 end

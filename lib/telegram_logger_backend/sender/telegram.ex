@@ -1,7 +1,7 @@
 defmodule TelegramLoggerBackend.Sender.Telegram do
   @moduledoc false
 
-  @base_url "https://api.telegram.org/bot"
+  @base_url "https://api.telegram.org"
   @default_timeout :timer.seconds(5)
 
   def send_message(text) do
@@ -30,7 +30,7 @@ defmodule TelegramLoggerBackend.Sender.Telegram do
     end
   end
 
-  defp build_url(method), do: @base_url <> token() <> "/" <> method
+  defp build_url(method), do: "#{@base_url}/bot#{token()}/#{method}"
 
   defp process_response(response) do
     case decode_response(response) do

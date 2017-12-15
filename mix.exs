@@ -22,7 +22,8 @@ defmodule TelegramLoggerBackend.Mixfile do
     [
       {:gen_stage, "~> 0.12"},
       {:httpoison, "~> 0.13"},
-      {:poison, "~> 3.1"}
+      {:poison, "~> 3.1"},
+      {:exvcr, "~> 0.8", only: :test}
     ]
   end
 end

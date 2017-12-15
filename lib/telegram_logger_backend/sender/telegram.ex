@@ -13,11 +13,11 @@ defmodule TelegramLoggerBackend.Sender.Telegram do
     )
   end
 
-  defp request(method, options \\ []) do
+  defp request(method, options) do
     method
     |> build_url
     |> HTTPoison.post(build_request(options), [], recv_timeout: @default_timeout)
-    |> process_response(method)
+    |> process_response()
   end
 
   defp token, do: config(:token)
@@ -32,7 +32,7 @@ defmodule TelegramLoggerBackend.Sender.Telegram do
 
   defp build_url(method), do: @base_url <> token() <> "/" <> method
 
-  defp process_response(response, method) do
+  defp process_response(response) do
     case decode_response(response) do
       {:ok, _} -> :ok
       %{ok: false, description: description} -> {:error, %{reason: description}}
@@ -48,6 +48,11 @@ defmodule TelegramLoggerBackend.Sender.Telegram do
   end
 
   defp build_request(params) when is_list(params) do
-    {:form, Enum.filter_map(params, fn {_, v} -> v end, fn {k, v} -> {k, to_string(v)} end)}
+    data =
+      params
+      |> Enum.filter(fn {_, v} -> v end)
+      |> Enum.map(fn {k, v} -> {k, to_string(v)} end)
+
+    {:form, data}
   end
 end

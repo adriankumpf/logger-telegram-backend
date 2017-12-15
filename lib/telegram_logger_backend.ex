@@ -1,9 +1,10 @@
 defmodule TelegramLoggerBackend do
   @moduledoc """
-  A logger backend for logging messages to Telegram.
+  A logger backend for posting messages to [Telegram]( https://telegram.org/).
 
-  ## Usage
-  First, add the backend to your `mix.exs` dependencies:
+  ## Installation
+
+  Add `:telegram_logger_backend` to your list of dependencies in `mix.exs`:
 
   ```elixir
   def deps do
@@ -11,20 +12,12 @@ defmodule TelegramLoggerBackend do
   end
   ```
 
-  Then run `$ mix do deps.get, compile` to download and compile your
-  dependencies.
-
-  Finally, add `TelegramLoggerBackend` to the `:backends` configuration in your
-  app's config:
+  Then add `TelegramLoggerBackend` to the `:backends` configuration and set the
+  `:level` to be logged as well as the telegram related configuration:
 
   ```elixir
   config :logger, backends: [TelegramLoggerBackend, :console]
-  ```
 
-  And set the log level to be logged as well as the telegram related
-  configuration:
-
-  ```elixir
   config :logger, :telegram,
     level: :warn,
     chat_id: 1111111,
@@ -36,9 +29,10 @@ defmodule TelegramLoggerBackend do
     * `:level` - the level to be logged by this backend (either `:debug`,
       `:info`, `:warn` or `:error`). Note that messages are filtered by the
       general `:level` configuration for the `:logger` application first.
-    * `:metadata` - the metadata to be printed by `$metadata`. Defaults to some
-      of the extra keys of the `:metadata` list: `[:line, :function, :module,
-      :application, :file]`. Setting `:metadata` to `:all` prints all metadata.
+    * `:metadata` - the metadata to be included in the telegram message. Defaults
+      to some of the extra keys of the `:metadata` list: `[:line, :function,
+      :module, :application, :file]`. Setting `:metadata` to `:all` prints all
+      metadata.
   """
 
   @behaviour :gen_event

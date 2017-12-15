@@ -1,11 +1,53 @@
 defmodule TelegramLoggerBackend do
-  @moduledoc false
+  @moduledoc """
+  A logger backend for logging messages to Telegram.
+
+  ## Usage
+  First, add the backend to your `mix.exs` dependencies:
+
+  ```elixir
+  def deps do
+    [{:telegram_logger_backend, "~> 0.1.0"}]
+  end
+  ```
+
+  Then run `$ mix do deps.get, compile` to download and compile your
+  dependencies.
+
+  Finally, add `TelegramLoggerBackend` to the `:backends` configuration in your
+  app's config:
+
+  ```elixir
+  config :logger, backends: [TelegramLoggerBackend, :console]
+  ```
+
+  And set the log level to be logged as well as the telegram related
+  configuration:
+
+  ```elixir
+  config :logger, :telegram,
+    level: :warn,
+    chat_id: 1111111,
+    token: "yourBotToken"
+  ```
+
+  ### Options
+
+    * `:level` - the level to be logged by this backend (either `:debug`,
+      `:info`, `:warn` or `:error`). Note that messages are filtered by the
+      general `:level` configuration for the `:logger` application first.
+    * `:metadata` - the metadata to be printed by `$metadata`. Defaults to some
+      of the extra keys of the `:metadata` list: `[:line, :function, :module,
+      :application, :file]`. Setting `:metadata` to `:all` prints all metadata.
+  """
 
   @behaviour :gen_event
 
-  defstruct level: nil, metadata: nil, chat_id: nil
+  defstruct level: nil, metadata: nil
 
   @default_metadata [:line, :function, :module, :application, :file]
+
+  # Callbacks
 
   def init(__MODULE__) do
     config = Application.get_env(:logger, :telegram)

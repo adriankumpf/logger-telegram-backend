@@ -4,6 +4,8 @@ A logger backend for posting messages to [Telegram]( https://telegram.org/).
 
 ## Installation
 
+**Note: this package is still in beta and thus not yet available on hex**
+
 Add `:telegram_logger_backend` to your list of dependencies in `mix.exs`:
 
 ```elixir

@@ -3,7 +3,7 @@ defmodule TelegramLoggerBackend.Formatter do
 
   use GenStage
 
-  alias TelegramLoggerBackend.Logger
+  alias TelegramLoggerBackend.Manager
 
   @name __MODULE__
 
@@ -17,7 +17,7 @@ defmodule TelegramLoggerBackend.Formatter do
     {
       :producer_consumer,
       %{},
-      subscribe_to: [{Logger, max_demand: max_demand, min_demand: min_demand}]
+      subscribe_to: [{Manager, min_demand: min_demand, max_demand: max_demand}]
     }
   end
 
@@ -32,20 +32,32 @@ defmodule TelegramLoggerBackend.Formatter do
 
   # Private
 
-  defp format_event({sender, %{message: msg, level: level, metadata: metadata}}) do
-    fields =
-      Enum.map(metadata ++ [level: level], fn {k, v} ->
-        "#{k |> to_string() |> String.capitalize()}: #{inspect(v)}"
-      end)
-      |> Enum.join("\n")
-
+  defp format_event({sender, %{level: lvl, message: msg, metadata: md}}) do
     text = """
-    *#{msg}*
+    *[#{lvl}]* #{format_message(msg)}
     ```plain
-    #{fields}
+    #{format_metadata(md)}
     ```
     """
 
     {sender, text}
+  end
+
+  defp format_message(msg) do
+    msg
+    |> to_string
+    |> String.split("\n")
+    |> highlight_title()
+    |> Enum.join("\n")
+    |> String.trim()
+  end
+
+  defp highlight_title([title]), do: ["*#{title}*"]
+  defp highlight_title([title | rest]), do: ["*#{title}*"] ++ rest
+
+  defp format_metadata(metadata) do
+    metadata
+    |> Enum.map(fn {k, v} -> "#{k |> to_string() |> String.capitalize()}: #{inspect(v)}" end)
+    |> Enum.join("\n")
   end
 end

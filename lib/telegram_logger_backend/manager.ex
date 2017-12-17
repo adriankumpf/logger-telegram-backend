@@ -1,13 +1,10 @@
-defmodule TelegramLoggerBackend.Logger do
+defmodule TelegramLoggerBackend.Manager do
   @moduledoc false
 
   use GenStage
 
   @name __MODULE__
 
-  @doc """
-  Adds a logger event to the queue for sending to Telegram.
-  """
   def add_event(event) do
     GenStage.cast(@name, {:add, event})
   end

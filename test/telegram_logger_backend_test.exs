@@ -21,7 +21,7 @@ defmodule TelegramLoggerBackendTest do
 
     Logger.error("foo")
 
-    assert_receive {:text, "*foo*" <> _rest}
+    assert_receive {:text, "*[error]* *foo*" <> _rest}
   end
 
   test "formats the message with markdown" do
@@ -31,13 +31,12 @@ defmodule TelegramLoggerBackendTest do
 
     assert_receive {
                      :text,
-                     "*foobar*\n" <>
+                     "*[error]* *foobar*\n" <>
                        "```plain\n" <>
                        "Line: 30\n" <>
                        "Function: \"test formats the message with markdown/1\"\n" <>
                        "Module: TelegramLoggerBackendTest\n" <>
-                       "File: \"/Users/adrian/dev/projects/telegram_logger_backend/test/telegram_logger_backend_test.exs\"\n" <>
-                       "Level: :error\n```\n"
+                       "File: \"/Users/adrian/dev/projects/telegram_logger_backend/test/telegram_logger_backend_test.exs\"\n```\n"
                    }
   end
 

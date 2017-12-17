@@ -40,6 +40,7 @@ defmodule TelegramLoggerBackend do
   defstruct [:level, :metadata, :sender]
 
   alias TelegramLoggerBackend.Sender.Telegram
+  alias TelegramLoggerBackend.Manager
 
   @default_metadata [:line, :function, :module, :application, :file]
   @default_sender Telegram
@@ -110,7 +111,7 @@ defmodule TelegramLoggerBackend do
       timestamp: ts
     }
 
-    TelegramLoggerBackend.Logger.add_event({sender, event})
+    Manager.add_event({sender, event})
   end
 
   defp take_metadata(metadata, :all), do: metadata

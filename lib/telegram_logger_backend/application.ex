@@ -3,11 +3,11 @@ defmodule TelegramLoggerBackend.Application do
 
   use Application
 
-  alias TelegramLoggerBackend.{Formatter, Logger, Sender}
+  alias TelegramLoggerBackend.{Formatter, Manager, Sender}
 
   def start(_type, _args) do
     children = [
-      Logger,
+      Manager,
       {Formatter, [5, 10]},
       {Sender, [0, 5]}
     ]
@@ -15,6 +15,8 @@ defmodule TelegramLoggerBackend.Application do
     Supervisor.start_link(
       children,
       strategy: :one_for_one,
+      max_restarts: 5,
+      max_seconds: 30,
       name: TelegramLoggerBackend.Supervisor
     )
   end

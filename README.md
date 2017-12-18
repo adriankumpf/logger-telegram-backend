@@ -22,9 +22,14 @@ config :logger, backends: [TelegramLoggerBackend, :console]
 
 config :logger, :telegram,
   level: :warn,
-  chat_id: 1111111,
+  chat_id: 1111111, # can also be a string
   token: "yourBotToken"
 ```
+
+The Telegram credentials are read at runtime from the application environment
+so that you can provide them via
+[distillerys](https://github.com/bitwalker/distillery) dynamic configuration
+with environment variables.
 
 ### Options
 

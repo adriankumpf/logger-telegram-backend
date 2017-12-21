@@ -75,7 +75,8 @@ defmodule TelegramLoggerBackendTest do
 
   defp configure(opts \\ []) do
     with true <- Process.register(self(), :telegram_logger_backend_test),
-         :ok <- Application.put_env(:logger, :telegram, Keyword.merge(opts, sender: TestSender)),
+         :ok <-
+           Application.put_env(:logger, :telegram, Keyword.merge(opts, sender: {TestSender, []})),
          {:ok, _} <- Logger.add_backend(TelegramLoggerBackend) do
       :ok
     end

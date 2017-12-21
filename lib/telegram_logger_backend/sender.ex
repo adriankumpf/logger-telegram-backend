@@ -25,8 +25,8 @@ defmodule TelegramLoggerBackend.Sender do
     {:noreply, [], state}
   end
 
-  defp process_events([{sender, text} | events], state) do
-    apply(sender, :send_message, [text])
+  defp process_events([{sender, sender_args, text} | events], state) do
+    apply(sender, :send_message, [text] ++ sender_args)
     process_events(events, state)
   end
 end

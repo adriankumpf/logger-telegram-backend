@@ -32,7 +32,7 @@ defmodule TelegramLoggerBackend.Formatter do
 
   # Private
 
-  defp format_event({sender, %{level: lvl, message: msg, metadata: md}}) do
+  defp format_event({sender, args, %{level: lvl, message: msg, metadata: md}}) do
     text = """
     *[#{lvl}]* #{format_message(msg)}
     ```plain
@@ -40,7 +40,7 @@ defmodule TelegramLoggerBackend.Formatter do
     ```
     """
 
-    {sender, text}
+    {sender, args, text}
   end
 
   defp format_message(msg) do

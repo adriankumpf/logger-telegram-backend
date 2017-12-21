@@ -4,33 +4,24 @@ defmodule TelegramLoggerBackend.Sender.Telegram do
   @base_url "https://api.telegram.org"
   @default_timeout :timer.seconds(5)
 
-  def send_message(text) do
+  def send_message(text, token, chat_id) do
     request(
       "sendMessage",
+      token,
       text: text,
-      chat_id: chat_id(),
+      chat_id: chat_id,
       parse_mode: "Markdown"
     )
   end
 
-  defp request(method, options) do
+  defp request(method, token, options) do
     method
-    |> build_url
+    |> build_url(token)
     |> HTTPoison.post(build_request(options), [], recv_timeout: @default_timeout)
     |> process_response()
   end
 
-  defp token, do: config(:token)
-  defp chat_id, do: config(:chat_id)
-
-  defp config(key) do
-    with {:ok, options} <- Application.fetch_env(:logger, :telegram),
-         {:ok, value} <- Keyword.fetch(options, key) do
-      value
-    end
-  end
-
-  defp build_url(method), do: "#{@base_url}/bot#{token()}/#{method}"
+  defp build_url(method, token), do: "#{@base_url}/bot#{token}/#{method}"
 
   defp process_response(response) do
     case decode_response(response) do

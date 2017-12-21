@@ -5,15 +5,6 @@ defmodule SenderTelegramTest do
   alias TelegramLoggerBackend.Sender.Telegram
 
   setup_all do
-    unless Application.get_env(:logger, :telegram) do
-      Application.put_env(
-        :logger,
-        :telegram,
-        chat_id: 1_111_111,
-        token: "TOKEN"
-      )
-    end
-
     ExVCR.Config.cassette_library_dir("test/fixture/vcr_cassettes")
     ExVCR.Config.filter_sensitive_data("bot[^/]+/", "bot<TOKEN>/")
     ExVCR.Config.filter_sensitive_data("id\":\\d+", "id\":666")
@@ -25,7 +16,7 @@ defmodule SenderTelegramTest do
 
   test "send_message" do
     use_cassette "send_message" do
-      assert Telegram.send_message("tach") == :ok
+      assert Telegram.send_message("tach", "$token", "$chatId") == :ok
     end
   end
 end

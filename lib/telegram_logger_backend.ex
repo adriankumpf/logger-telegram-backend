@@ -8,12 +8,14 @@ defmodule TelegramLoggerBackend do
 
   ```elixir
   def deps do
-    [{:telegram_logger_backend, "~> 0.2.0"}]
+    [{:telegram_logger_backend, "~> 0.3.0"}]
   end
   ```
 
-  Then add `TelegramLoggerBackend` to the `:backends` configuration and add the
-  telegram credentials:
+  ## Configuration
+
+  Add `TelegramLoggerBackend` to the `:backends` configuration. Then add your
+  telegram `chat_id` and bot `token`:
 
   ```elixir
   config :logger, backends: [TelegramLoggerBackend, :console]
@@ -30,13 +32,15 @@ defmodule TelegramLoggerBackend do
 
   ### Options
 
+  In addition, the following options are available:
+
     * `:level` - the level to be logged by this backend (either `:debug`,
       `:info`, `:warn` or `:error`). Note that messages are filtered by the
       general `:level` configuration for the `:logger` application first. If not
       explicitly configured all levels are logged.
     * `:metadata` - the metadata to be included in the telegram message. Defaults
       to  `[:line, :function, :module, :application, :file]`. Setting `:metadata`
-      to `:all` prints all metadata.
+      to `:all` gets all metadata.
     * `:metadata_filter` - the metadata which is required in order for a message
       to be logged. Example: `metadata_filter: [application: :ui]`.
 
@@ -49,30 +53,58 @@ defmodule TelegramLoggerBackend do
     token: "$botToken",
     level: :info,
     metadata: :all
-    metadata_filter: [application: ui]
+    metadata_filter: [application: :ui]
+  ```
+
+  ### Multiple logger handlers
+
+  Like the
+  [LoggerFileBackend](https://github.com/onkel-dirtus/logger_file_backend)
+  multiple logger handlers may be configured, each with different `:chat_id`s,
+  `:level`s etc. Each handler has to be configured as a logger backend:
+
+  ```elixir
+  config :logger,
+    backends: [
+      {TelegramLoggerBackend, :telegram_filter},
+      {TelegramLoggerBackend, :telegram_level},
+      :console
+    ]
+
+  config :logger, :telegram_filter,
+    chat_id: "$chatId",
+    token: "$botToken",
+    metadata_filter: [application: :ui],
+    metadata: [:line, :function, :module, :pid]
+
+  config :logger, :telegram_level,
+    chat_id: "$chatId",
+    token: "$botToken",
+    level: :warn,
   ```
   """
 
   @behaviour :gen_event
 
-  defstruct [:level, :metadata, :metadata_filter, :sender]
+  defstruct [:name, :level, :metadata, :metadata_filter, :sender, :sender_args]
 
   alias TelegramLoggerBackend.Sender.Telegram
   alias TelegramLoggerBackend.Manager
 
+  @default_name :telegram
+  @default_sender {Telegram, [:token, :chat_id]}
   @default_metadata [:line, :function, :module, :application, :file]
-  @default_sender Telegram
 
   # Callbacks
 
-  def init(__MODULE__) do
-    config = Application.get_env(:logger, :telegram)
-    {:ok, init(config, %__MODULE__{})}
-  end
+  def init(__MODULE__), do: init({__MODULE__, @default_name})
 
-  def init({__MODULE__, opts}) when is_list(opts) do
-    config = Keyword.merge(Application.get_env(:logger, :telegram), opts)
-    {:ok, init(config, %__MODULE__{})}
+  def init({__MODULE__, name}) when is_atom(name) do
+    state =
+      Application.get_env(:logger, name)
+      |> initialize(%__MODULE__{})
+
+    {:ok, state}
   end
 
   def handle_call({:configure, options}, state) do
@@ -85,9 +117,9 @@ defmodule TelegramLoggerBackend do
 
   def handle_event(
         {level, _gl, {Logger, msg, ts, md}},
-        %{level: log_level, metadata_filter: metadata_filter} = state
+        %{level: log_lvl, metadata_filter: filter} = state
       ) do
-    if meet_level?(level, log_level) and metadata_matches?(md, metadata_filter) do
+    if meet_level?(level, log_lvl) and metadata_matches?(md, filter) do
       :ok = log_event(level, msg, ts, md, state)
     end
 
@@ -120,30 +152,38 @@ defmodule TelegramLoggerBackend do
   defp configure(options, state) do
     config = Keyword.merge(Application.get_env(:logger, :telegram), options)
     Application.put_env(:logger, :telegram, config)
-    init(config, state)
+    initialize(config, state)
   end
 
-  defp init(config, state) do
-    level = Keyword.get(config, :level)
-    metadata = Keyword.get(config, :metadata, @default_metadata) |> configure_metadata()
-    metadata_filter = Keyword.get(config, :metadata_filter)
-    sender = Keyword.get(config, :sender, @default_sender)
+  defp initialize(config, state) do
+    {sender, sender_args} = Keyword.get(config, :sender, @default_sender)
 
-    %{state | metadata: metadata, level: level, sender: sender, metadata_filter: metadata_filter}
+    level = Keyword.get(config, :level)
+    metadata = Keyword.get(config, :metadata, @default_metadata)
+    metadata_filter = Keyword.get(config, :metadata_filter)
+
+    %{
+      state
+      | sender: sender,
+        sender_args: Enum.map(sender_args, &Keyword.get(config, &1)),
+        metadata: configure_metadata(metadata),
+        level: level,
+        metadata_filter: metadata_filter
+    }
   end
 
   defp configure_metadata(:all), do: :all
   defp configure_metadata(metadata), do: Enum.reverse(metadata)
 
-  defp log_event(level, msg, ts, md, %{metadata: keys, sender: sender}) do
+  defp log_event(lvl, msg, ts, md, %{sender: sender, sender_args: sender_args, metadata: keys}) do
     event = %{
-      level: level,
+      level: lvl,
       message: msg,
       metadata: take_metadata(md, keys),
       timestamp: ts
     }
 
-    Manager.add_event({sender, event})
+    Manager.add_event({sender, sender_args, event})
   end
 
   defp take_metadata(metadata, :all), do: metadata

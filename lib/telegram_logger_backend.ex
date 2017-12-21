@@ -42,7 +42,7 @@ defmodule TelegramLoggerBackend do
 
   @behaviour :gen_event
 
-  defstruct [:level, :metadata, :sender]
+  defstruct [:level, :metadata, :metadata_filter, :sender]
 
   alias TelegramLoggerBackend.Sender.Telegram
   alias TelegramLoggerBackend.Manager
@@ -70,8 +70,11 @@ defmodule TelegramLoggerBackend do
     {:ok, state}
   end
 
-  def handle_event({level, _gl, {Logger, msg, ts, md}}, %{level: log_level} = state) do
-    if meet_level?(level, log_level) do
+  def handle_event(
+        {level, _gl, {Logger, msg, ts, md}},
+        %{level: log_level, metadata_filter: metadata_filter} = state
+      ) do
+    if meet_level?(level, log_level) and metadata_matches?(md, metadata_filter) do
       :ok = log_event(level, msg, ts, md, state)
     end
 
@@ -91,6 +94,16 @@ defmodule TelegramLoggerBackend do
   defp meet_level?(_lvl, nil), do: true
   defp meet_level?(lvl, min), do: Logger.compare_levels(lvl, min) != :lt
 
+  defp metadata_matches?(_metadata, nil), do: true
+  defp metadata_matches?(_metadata, []), do: true
+
+  defp metadata_matches?(metadata, [{k, v} | rest]) do
+    case Keyword.fetch(metadata, k) do
+      {:ok, ^v} -> metadata_matches?(metadata, rest)
+      _ -> false
+    end
+  end
+
   defp configure(options, state) do
     config = Keyword.merge(Application.get_env(:logger, :telegram), options)
     Application.put_env(:logger, :telegram, config)
@@ -100,9 +113,10 @@ defmodule TelegramLoggerBackend do
   defp init(config, state) do
     level = Keyword.get(config, :level)
     metadata = Keyword.get(config, :metadata, @default_metadata) |> configure_metadata()
+    metadata_filter = Keyword.get(config, :metadata_filter)
     sender = Keyword.get(config, :sender, @default_sender)
 
-    %{state | metadata: metadata, level: level, sender: sender}
+    %{state | metadata: metadata, level: level, sender: sender, metadata_filter: metadata_filter}
   end
 
   defp configure_metadata(:all), do: :all

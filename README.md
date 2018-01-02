@@ -16,8 +16,15 @@ end
 
 ## Configuration
 
-Add `TelegramLoggerBackend` to the `:backends` configuration. Then add your
-telegram `chat_id` and bot `token`:
+First of all you need to create a [Telegram
+bot](https://core.telegram.org/bots). Follow the [instructions
+here](https://core.telegram.org/bots#6-botfather) to create one and get the
+`token` for the bot. Since bots are not allowed to contact users, you need to
+send a message first. Afterwards, retrieve your `chat_id` with `$ curl -X GET
+https://api.telegram.org/botYOUR_TOKEN/getUpdates`.
+
+Then add `TelegramLoggerBackend` to the `:backends` configuration and configure
+the telegram `chat_id` and bot `token` as well:
 
 ```elixir
 config :logger, backends: [TelegramLoggerBackend, :console]

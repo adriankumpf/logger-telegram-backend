@@ -17,7 +17,7 @@ defmodule TelegramLoggerBackendTest do
 
     Logger.info("foo")
 
-    assert_receive {:text, "*[info]* *foo*" <> _rest}
+    assert_receive {:text, "<b>[info]</b> <b>foo</b>" <> _rest}
   end
 
   test "formats the message with markdown" do
@@ -27,15 +27,25 @@ defmodule TelegramLoggerBackendTest do
 
     assert_receive {
                      :text,
-                     "*[error]* *foobar*\n" <>
-                       "```plain\n" <>
+                     "<b>[error]</b> <b>foobar</b>\n" <>
+                       "<pre>" <>
                        "Line: " <>
                        <<_line::size(16)>> <>
                        "\n" <>
                        "Function: \"test formats the message with markdown/1\"\n" <>
                        "Module: TelegramLoggerBackendTest\n" <>
-                       "File: \"/Users/adrian/dev/projects/telegram_logger_backend/test/telegram_logger_backend_test.exs\"\n```\n"
+                       "File: \"/Users/adrian/dev/projects/telegram_logger_backend/test/telegram_logger_backend_test.exs\"</pre>\n"
                    }
+  end
+
+  test "escapes special chars" do
+    :ok = configure(metadata: [])
+
+    Logger.info("<>&")
+    Logger.info("<code>FOO</code>")
+
+    assert_receive {:text, "<b>[info]</b> <b>&lt;&gt;&amp;</b>\n<pre></pre>\n"}
+    assert_receive {:text, "<b>[info]</b> <b>&lt;code&gt;FOO&lt;/code&gt;</b>\n<pre></pre>\n"}
   end
 
   test "logs multiple message smoothly" do

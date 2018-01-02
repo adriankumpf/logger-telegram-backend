@@ -34,10 +34,8 @@ defmodule TelegramLoggerBackend.Formatter do
 
   defp format_event({sender, args, %{level: lvl, message: msg, metadata: md}}) do
     text = """
-    *[#{lvl}]* #{format_message(msg)}
-    ```plain
-    #{format_metadata(md)}
-    ```
+    <b>[#{lvl}]</b> #{format_message(msg)}
+    <pre>#{format_metadata(md)}</pre>
     """
 
     {sender, args, text}
@@ -46,14 +44,27 @@ defmodule TelegramLoggerBackend.Formatter do
   defp format_message(msg) do
     msg
     |> to_string
+    |> escape_special_chars()
     |> String.split("\n")
     |> highlight_title()
     |> Enum.join("\n")
     |> String.trim()
   end
 
-  defp highlight_title([title]), do: ["*#{title}*"]
-  defp highlight_title([title | rest]), do: ["*#{title}*"] ++ rest
+  defp escape_special_chars(msg) do
+    special_chars = [
+      {"&", "&amp;"},
+      {"<", "&lt;"},
+      {">", "&gt;"}
+    ]
+
+    Enum.reduce(special_chars, msg, fn {c, r}, acc ->
+      String.replace(acc, c, r)
+    end)
+  end
+
+  defp highlight_title([title]), do: ["<b>#{title}</b>"]
+  defp highlight_title([title | rest]), do: ["<b>#{title}</b>"] ++ rest
 
   defp format_metadata(metadata) do
     metadata

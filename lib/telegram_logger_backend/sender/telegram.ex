@@ -10,7 +10,7 @@ defmodule TelegramLoggerBackend.Sender.Telegram do
       token,
       text: text,
       chat_id: chat_id,
-      parse_mode: "Markdown"
+      parse_mode: "HTML"
     )
   end
 

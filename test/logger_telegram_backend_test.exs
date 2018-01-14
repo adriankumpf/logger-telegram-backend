@@ -1,4 +1,4 @@
-defmodule TelegramLoggerBackendTest do
+defmodule LoggerTelegramBackendTest do
   use ExUnit.Case, async: false
 
   require Logger
@@ -8,7 +8,7 @@ defmodule TelegramLoggerBackendTest do
   end
 
   setup do
-    Logger.remove_backend(TelegramLoggerBackend)
+    Logger.remove_backend(LoggerTelegramBackend)
     :ok
   end
 
@@ -26,16 +26,16 @@ defmodule TelegramLoggerBackendTest do
     Logger.error("foobar")
 
     assert_receive {
-                     :text,
-                     "<b>[error]</b> <b>foobar</b>\n" <>
-                       "<pre>" <>
-                       "Line: " <>
-                       <<_line::size(16)>> <>
-                       "\n" <>
-                       "Function: \"test formats the message with markdown/1\"\n" <>
-                       "Module: TelegramLoggerBackendTest\n" <>
-                       "File: \"/Users/adrian/dev/projects/telegram_logger_backend/test/telegram_logger_backend_test.exs\"</pre>\n"
-                   }
+      :text,
+      "<b>[error]</b> <b>foobar</b>\n" <>
+        "<pre>" <>
+        "Line: " <>
+        <<_line::size(16)>> <>
+        "\n" <>
+        "Function: \"test formats the message with markdown/1\"\n" <>
+        "Module: LoggerTelegramBackendTest\n" <>
+        "File:" <> _file
+    }
   end
 
   test "escapes special chars" do
@@ -84,10 +84,10 @@ defmodule TelegramLoggerBackendTest do
   end
 
   defp configure(opts \\ []) do
-    with true <- Process.register(self(), :telegram_logger_backend_test),
+    with true <- Process.register(self(), :logger_telegram_backend_test),
          :ok <-
            Application.put_env(:logger, :telegram, Keyword.merge(opts, sender: {TestSender, []})),
-         {:ok, _} <- Logger.add_backend(TelegramLoggerBackend) do
+         {:ok, _} <- Logger.add_backend(LoggerTelegramBackend) do
       :ok
     end
   end
@@ -95,7 +95,7 @@ end
 
 defmodule TestSender do
   def send_message(text) do
-    send(:telegram_logger_backend_test, {:text, text})
+    send(:logger_telegram_backend_test, {:text, text})
     :ok
   end
 end

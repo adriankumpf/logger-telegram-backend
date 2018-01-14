@@ -1,9 +1,9 @@
-defmodule TelegramLoggerBackend.Sender do
+defmodule LoggerTelegramBackend.Sender do
   @moduledoc false
 
   use GenStage
 
-  alias TelegramLoggerBackend.Formatter
+  alias LoggerTelegramBackend.Formatter
 
   @name __MODULE__
 

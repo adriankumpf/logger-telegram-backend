@@ -1,4 +1,4 @@
-defmodule TelegramLoggerBackend do
+defmodule LoggerTelegramBackend do
   @moduledoc """
   A logger backend for posting messages to [Telegram]( https://telegram.org/).
   """
@@ -7,8 +7,8 @@ defmodule TelegramLoggerBackend do
 
   defstruct [:name, :level, :metadata, :metadata_filter, :sender, :sender_args]
 
-  alias TelegramLoggerBackend.Sender.Telegram
-  alias TelegramLoggerBackend.Manager
+  alias LoggerTelegramBackend.Sender.Telegram
+  alias LoggerTelegramBackend.Manager
 
   @default_name :telegram
   @default_sender {Telegram, [:token, :chat_id]}

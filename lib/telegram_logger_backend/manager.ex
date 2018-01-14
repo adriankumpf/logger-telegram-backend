@@ -1,4 +1,4 @@
-defmodule TelegramLoggerBackend.Manager do
+defmodule LoggerTelegramBackend.Manager do
   @moduledoc false
 
   use GenStage

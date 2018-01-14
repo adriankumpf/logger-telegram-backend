@@ -1,4 +1,4 @@
-defmodule TelegramLoggerBackend.Sender.Telegram do
+defmodule LoggerTelegramBackend.Sender.Telegram do
   @moduledoc false
 
   @base_url "https://api.telegram.org"

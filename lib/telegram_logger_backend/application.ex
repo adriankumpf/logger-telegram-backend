@@ -1,9 +1,9 @@
-defmodule TelegramLoggerBackend.Application do
+defmodule LoggerTelegramBackend.Application do
   @moduledoc false
 
   use Application
 
-  alias TelegramLoggerBackend.{Formatter, Manager, Sender}
+  alias LoggerTelegramBackend.{Formatter, Manager, Sender}
 
   def start(_type, _args) do
     children = [
@@ -17,7 +17,7 @@ defmodule TelegramLoggerBackend.Application do
       strategy: :one_for_one,
       max_restarts: 5,
       max_seconds: 30,
-      name: TelegramLoggerBackend.Supervisor
+      name: LoggerTelegramBackend.Supervisor
     )
   end
 end

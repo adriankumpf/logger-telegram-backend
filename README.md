@@ -1,16 +1,14 @@
-# TelegramLoggerBackend
+# LoggerTelegramBackend
 
-A logger backend for posting messages to [Telegram]( https://telegram.org/).
+A logger backend for [Telegram]( https://telegram.org/).
 
 ## Installation
 
-**Note: this package is still in beta and thus not yet available on hex**
-
-Add `:telegram_logger_backend` to your list of dependencies in `mix.exs`:
+Add `:logger_telegram_backend` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:telegram_logger_backend, "~> 0.4"}]
+  [{:logger_telegram_backend, "~> 1.0"}]
 end
 ```
 
@@ -23,11 +21,11 @@ here](https://core.telegram.org/bots#6-botfather) to create one and get the
 send a message first. Afterwards, retrieve your `chat_id` with `$ curl -X GET
 https://api.telegram.org/botYOUR_TOKEN/getUpdates`.
 
-Then add `TelegramLoggerBackend` to the `:backends` configuration and configure
-the telegram `chat_id` and bot `token` as well:
+Then add `LoggerTelegramBackend` to the `:backends` configuration, configure
+the telegram `chat_id` and bot `token`:
 
 ```elixir
-config :logger, backends: [TelegramLoggerBackend, :console]
+config :logger, backends: [LoggerTelegramBackend, :console]
 
 config :logger, :telegram,
   chat_id: "$chatId",
@@ -41,7 +39,7 @@ with environment variables.
 
 ### Options
 
-In addition, the following options are available:
+The following options are available:
 
   * `:level` - the level to be logged by this backend (either `:debug`,
     `:info`, `:warn` or `:error`). Note that messages are filtered by the
@@ -70,13 +68,13 @@ config :logger, :telegram,
 Like the
 [LoggerFileBackend](https://github.com/onkel-dirtus/logger_file_backend)
 multiple logger handlers may be configured, each with different `:chat_id`s,
-`:level`s etc. Each handler has to be configured as a logger backend:
+`:level`s etc. Each handler has to be configured as a separate logger backend:
 
 ```elixir
 config :logger,
   backends: [
-    {TelegramLoggerBackend, :telegram_filter},
-    {TelegramLoggerBackend, :telegram_level},
+    {LoggerTelegramBackend, :telegram_filter},
+    {LoggerTelegramBackend, :telegram_level},
     :console
   ]
 

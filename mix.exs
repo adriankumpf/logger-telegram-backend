@@ -1,19 +1,20 @@
-defmodule TelegramLoggerBackend.Mixfile do
+defmodule LoggerTelegramBackend.Mixfile do
   use Mix.Project
 
   def project do
     [
-      app: :telegram_logger_backend,
-      version: "0.4.0",
+      app: :logger_telegram_backend,
+      version: "1.0.0",
       elixir: "~> 1.5",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       package: package(),
 
       # Docs
-      name: "TelegramLoggerBackend",
-      description: " A logger backend for posting messages to Telegram.",
-      source_url: "https://github.com/adriankumpf/telegram-logger-backend",
+      name: "LoggerTelegramBackend",
+      description: "A Logger backend for Telegram",
+      source_url: "https://github.com/adriankumpf/logger-telegram-backend",
+      homepage_url: "https://github.com/adriankumpf/logger-telegram-backend",
       docs: [main: "readme", extras: ["README.md"]]
     ]
   end
@@ -21,7 +22,7 @@ defmodule TelegramLoggerBackend.Mixfile do
   def application do
     [
       extra_applications: [:logger],
-      mod: {TelegramLoggerBackend.Application, []}
+      mod: {LoggerTelegramBackend.Application, []}
     ]
   end
 
@@ -38,7 +39,7 @@ defmodule TelegramLoggerBackend.Mixfile do
   defp package do
     [
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/adriankumpf/telegram-logger-backend"},
+      links: %{"GitHub" => "https://github.com/adriankumpf/logger-telegram-backend"},
       maintainers: ["Adrian Kumpf"]
     ]
   end

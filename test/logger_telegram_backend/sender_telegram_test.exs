@@ -2,7 +2,7 @@ defmodule SenderTelegramTest do
   use ExUnit.Case
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
-  alias TelegramLoggerBackend.Sender.Telegram
+  alias LoggerTelegramBackend.Sender.Telegram
 
   setup_all do
     ExVCR.Config.cassette_library_dir("test/fixture/vcr_cassettes")

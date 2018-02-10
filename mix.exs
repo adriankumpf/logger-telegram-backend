@@ -4,7 +4,7 @@ defmodule LoggerTelegramBackend.Mixfile do
   def project do
     [
       app: :logger_telegram_backend,
-      version: "1.0.0",
+      version: "1.0.1",
       elixir: "~> 1.5",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -28,9 +28,9 @@ defmodule LoggerTelegramBackend.Mixfile do
 
   defp deps do
     [
-      {:ex_doc, "~> 0.16", only: :dev, runtime: false},
-      {:exvcr, "~> 0.8", only: :test},
-      {:gen_stage, "~> 0.12"},
+      {:ex_doc, "~> 0.18", only: :dev, runtime: false},
+      {:exvcr, "~> 0.10", only: :test},
+      {:gen_stage, "~> 0.13"},
       {:httpoison, "~> 0.13"},
       {:poison, "~> 3.1"}
     ]

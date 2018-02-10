@@ -44,11 +44,9 @@ defmodule LoggerTelegramBackend.Formatter do
   defp format_message(msg) do
     msg
     |> to_string
-    |> escape_special_chars()
-    |> String.split("\n")
-    |> highlight_title()
-    |> Enum.join("\n")
     |> String.trim()
+    |> escape_special_chars()
+    |> highlight_title()
   end
 
   defp escape_special_chars(msg) do
@@ -63,8 +61,15 @@ defmodule LoggerTelegramBackend.Formatter do
     end)
   end
 
-  defp highlight_title([title]), do: ["<b>#{title}</b>"]
-  defp highlight_title([title | rest]), do: ["<b>#{title}</b>"] ++ rest
+  defp highlight_title(msg) do
+    msg
+    |> String.split("\n")
+    |> do_highlight_title()
+    |> Enum.join("\n")
+  end
+
+  defp do_highlight_title([title]), do: ["<b>#{title}</b>"]
+  defp do_highlight_title([title | rest]), do: ["<b>#{title}</b>"] ++ rest
 
   defp format_metadata(metadata) do
     metadata

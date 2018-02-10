@@ -4,7 +4,7 @@ defmodule SenderTelegramTest do
 
   alias LoggerTelegramBackend.Sender.Telegram
 
-  setup_all do
+  setup do
     ExVCR.Config.cassette_library_dir("test/fixture/vcr_cassettes")
     ExVCR.Config.filter_sensitive_data("bot[^/]+/", "bot<TOKEN>/")
     ExVCR.Config.filter_sensitive_data("id\":\\d+", "id\":666")

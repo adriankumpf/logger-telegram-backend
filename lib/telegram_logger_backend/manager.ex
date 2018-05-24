@@ -5,15 +5,15 @@ defmodule LoggerTelegramBackend.Manager do
 
   @name __MODULE__
 
+  def start_link(_args) do
+    GenStage.start_link(__MODULE__, :ok, name: @name)
+  end
+
   def add_event(event) do
     GenStage.cast(@name, {:add, event})
   end
 
   # Callbacks
-
-  def start_link(_args) do
-    GenStage.start_link(__MODULE__, :ok, name: @name)
-  end
 
   def init(:ok) do
     {:producer, {:queue.new(), 0}}
@@ -35,11 +35,8 @@ defmodule LoggerTelegramBackend.Manager do
 
   defp dispatch_events(queue, demand, events) when demand > 0 do
     case :queue.out(queue) do
-      {:empty, queue} ->
-        {:noreply, events, {queue, demand}}
-
-      {{:value, event}, queue} ->
-        dispatch_events(queue, demand - 1, [event | events])
+      {:empty, queue} -> {:noreply, events, {queue, demand}}
+      {{:value, event}, queue} -> dispatch_events(queue, demand - 1, [event | events])
     end
   end
 

@@ -5,10 +5,8 @@ defmodule LoggerTelegramBackend.Sender do
 
   alias LoggerTelegramBackend.Formatter
 
-  @name __MODULE__
-
   def start_link(args) do
-    GenStage.start_link(__MODULE__, args, name: @name)
+    GenStage.start_link(__MODULE__, args, name: __MODULE__)
   end
 
   # Callbacks
@@ -20,6 +18,8 @@ defmodule LoggerTelegramBackend.Sender do
   def handle_events(events, _from, state) do
     process_events(events, state)
   end
+
+  # Private
 
   defp process_events([], state) do
     {:noreply, [], state}

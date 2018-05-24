@@ -4,7 +4,7 @@ defmodule LoggerTelegramBackend.Mixfile do
   def project do
     [
       app: :logger_telegram_backend,
-      version: "1.0.2",
+      version: "1.0.3",
       elixir: "~> 1.5",
       start_permanent: Mix.env() == :prod,
       deps: deps(),

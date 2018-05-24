@@ -1,6 +1,6 @@
 # LoggerTelegramBackend
 
-A logger backend for [Telegram]( https://telegram.org/).
+A logger backend for [Telegram](https://telegram.org/).
 
 ## Installation
 
@@ -18,8 +18,8 @@ First of all you need to create a [Telegram
 bot](https://core.telegram.org/bots). Follow the [instructions
 here](https://core.telegram.org/bots#6-botfather) to create one and get the
 `token` for the bot. Since bots are not allowed to contact users, you need to
-send a message first. Afterwards, retrieve your `chat_id` with `$ curl -X GET
-https://api.telegram.org/botYOUR_TOKEN/getUpdates`.
+send a message first. Afterwards, retrieve your `chat_id` with
+`$ curl -X GET https://api.telegram.org/botYOUR_TOKEN/getUpdates`.
 
 Then add `LoggerTelegramBackend` to the `:backends` configuration, configure
 the telegram `chat_id` and bot `token`:
@@ -41,16 +41,15 @@ with environment variables.
 
 The following options are available:
 
-  * `:level` - the level to be logged by this backend (either `:debug`,
-    `:info`, `:warn` or `:error`). Note that messages are filtered by the
-    general `:level` configuration for the `:logger` application first. If not
-    explicitly configured all levels are logged.
-  * `:metadata` - the metadata to be included in the telegram message. Defaults
-    to  `[:line, :function, :module, :application, :file]`. Setting `:metadata`
-    to `:all` gets all metadata.
-  * `:metadata_filter` - the metadata which is required in order for a message
-    to be logged. Example: `metadata_filter: [application: :ui]`.
-
+* `:level` - the level to be logged by this backend (either `:debug`,
+  `:info`, `:warn` or `:error`). Note that messages are filtered by the
+  general `:level` configuration for the `:logger` application first. If not
+  explicitly configured all levels are logged.
+* `:metadata` - the metadata to be included in the telegram message. Defaults
+  to `[:line, :function, :module, :application, :file]`. Setting `:metadata`
+  to `:all` gets all metadata.
+* `:metadata_filter` - the metadata which is required in order for a message
+  to be logged. Example: `metadata_filter: [application: :ui]`.
 
 #### Example
 

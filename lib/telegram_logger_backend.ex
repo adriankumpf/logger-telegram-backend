@@ -14,8 +14,7 @@ defmodule LoggerTelegramBackend do
   @default_sender {Telegram, [:token, :chat_id]}
   @default_metadata [:line, :function, :module, :application, :file]
 
-  # Callbacks
-
+  @impl :gen_event
   def init(__MODULE__), do: init({__MODULE__, @default_name})
 
   def init({__MODULE__, name}) when is_atom(name) do
@@ -26,10 +25,12 @@ defmodule LoggerTelegramBackend do
     {:ok, state}
   end
 
+  @impl :gen_event
   def handle_call({:configure, options}, state) do
     {:ok, :ok, configure(options, state)}
   end
 
+  @impl :gen_event
   def handle_event({_level, gl, _event}, state) when node(gl) != node() do
     {:ok, state}
   end
@@ -49,6 +50,7 @@ defmodule LoggerTelegramBackend do
     {:ok, state}
   end
 
+  @impl :gen_event
   def handle_info(_message, state) do
     {:ok, state}
   end

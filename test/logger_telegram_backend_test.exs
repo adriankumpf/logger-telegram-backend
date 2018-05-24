@@ -7,11 +7,6 @@ defmodule LoggerTelegramBackendTest do
     Logger.remove_backend(:console)
   end
 
-  setup do
-    Logger.remove_backend(LoggerTelegramBackend)
-    :ok
-  end
-
   test "logs the message to the specified sender" do
     :ok = configure()
 
@@ -33,8 +28,7 @@ defmodule LoggerTelegramBackendTest do
         <<_line::size(16)>> <>
         "\n" <>
         "Function: \"test formats the message with markdown/1\"\n" <>
-        "Module: LoggerTelegramBackendTest\n" <>
-        "File:" <> _file
+        "Module: LoggerTelegramBackendTest\n" <> "File:" <> _file
     }
   end
 
@@ -87,6 +81,7 @@ defmodule LoggerTelegramBackendTest do
     with true <- Process.register(self(), :logger_telegram_backend_test),
          :ok <-
            Application.put_env(:logger, :telegram, Keyword.merge(opts, sender: {TestSender, []})),
+         _ <- Logger.remove_backend(LoggerTelegramBackend),
          {:ok, _} <- Logger.add_backend(LoggerTelegramBackend) do
       :ok
     end

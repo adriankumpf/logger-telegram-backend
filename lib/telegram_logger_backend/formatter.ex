@@ -5,10 +5,8 @@ defmodule LoggerTelegramBackend.Formatter do
 
   alias LoggerTelegramBackend.Manager
 
-  @name __MODULE__
-
   def start_link([min_demand, max_demand]) do
-    GenStage.start_link(__MODULE__, {min_demand, max_demand}, name: @name)
+    GenStage.start_link(__MODULE__, {min_demand, max_demand}, name: __MODULE__)
   end
 
   # Callbacks

@@ -8,7 +8,7 @@ Add `:logger_telegram_backend` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:logger_telegram_backend, "~> 1.0"}]
+  [{:logger_telegram_backend, "~> 1.1"}]
 end
 ```
 
@@ -41,14 +41,14 @@ with environment variables.
 
 The following options are available:
 
-* `:level` - the level to be logged by this backend (either `:debug`,
+- `:level` - the level to be logged by this backend (either `:debug`,
   `:info`, `:warn` or `:error`). Note that messages are filtered by the
   general `:level` configuration for the `:logger` application first. If not
   explicitly configured all levels are logged.
-* `:metadata` - the metadata to be included in the telegram message. Defaults
+- `:metadata` - the metadata to be included in the telegram message. Defaults
   to `[:line, :function, :module, :application, :file]`. Setting `:metadata`
   to `:all` gets all metadata.
-* `:metadata_filter` - the metadata which is required in order for a message
+- `:metadata_filter` - the metadata which is required in order for a message
   to be logged. Example: `metadata_filter: [application: :ui]`.
 
 #### Example

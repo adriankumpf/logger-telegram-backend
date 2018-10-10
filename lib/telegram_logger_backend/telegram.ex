@@ -1,12 +1,12 @@
-defmodule LoggerTelegramBackend.Sender.Telegram do
+defmodule LoggerTelegramBackend.Telegram do
   @moduledoc false
 
   alias HTTPoison.{Response, Error}
 
-  def send_message(text, token, chat_id) when is_binary(text) do
-    post("https://api.telegram.org/bot#{token}/sendMessage",
+  def send_message(text, opts) when is_binary(text) and is_list(opts) do
+    post("https://api.telegram.org/bot#{Keyword.fetch!(opts, :token)}/sendMessage",
       text: text,
-      chat_id: chat_id,
+      chat_id: Keyword.fetch!(opts, :chat_id),
       parse_mode: "HTML"
     )
   end

@@ -6,21 +6,23 @@ defmodule LoggerTelegramBackend do
   @behaviour :gen_event
 
   defstruct [:name, :level, :metadata, :metadata_filter, :sender, :sender_args]
+  alias __MODULE__, as: State
 
-  alias LoggerTelegramBackend.Sender.Telegram
-  alias LoggerTelegramBackend.Manager
+  alias LoggerTelegramBackend.{Formatter, Telegram}
 
   @default_name :telegram
   @default_sender {Telegram, [:token, :chat_id]}
   @default_metadata [:line, :function, :module, :application, :file]
 
   @impl :gen_event
-  def init(__MODULE__), do: init({__MODULE__, @default_name})
+  def init(__MODULE__) do
+    init({__MODULE__, @default_name})
+  end
 
   def init({__MODULE__, name}) when is_atom(name) do
     state =
       Application.get_env(:logger, name)
-      |> initialize(%__MODULE__{})
+      |> initialize(%State{})
 
     {:ok, state}
   end
@@ -35,12 +37,9 @@ defmodule LoggerTelegramBackend do
     {:ok, state}
   end
 
-  def handle_event(
-        {level, _gl, {Logger, msg, ts, md}},
-        %{level: log_lvl, metadata_filter: filter} = state
-      ) do
-    if meet_level?(level, log_lvl) and metadata_matches?(md, filter) do
-      :ok = log_event(level, msg, ts, md, state)
+  def handle_event({level, _gl, {Logger, message, timestamp, metadata}}, state) do
+    if meet_level?(level, state.level) and metadata_matches?(metadata, state.metadata_filter) do
+      :ok = log_event(level, message, timestamp, metadata, state)
     end
 
     {:ok, state}
@@ -55,7 +54,7 @@ defmodule LoggerTelegramBackend do
     {:ok, state}
   end
 
-  ## Helpers
+  ## Private
 
   defp meet_level?(_lvl, nil), do: true
   defp meet_level?(lvl, min), do: Logger.compare_levels(lvl, min) != :lt
@@ -83,10 +82,10 @@ defmodule LoggerTelegramBackend do
     metadata = Keyword.get(config, :metadata, @default_metadata)
     metadata_filter = Keyword.get(config, :metadata_filter)
 
-    %{
+    %State{
       state
       | sender: sender,
-        sender_args: Enum.map(sender_args, &Keyword.get(config, &1)),
+        sender_args: Keyword.take(config, sender_args),
         metadata: configure_metadata(metadata),
         level: level,
         metadata_filter: metadata_filter
@@ -96,15 +95,11 @@ defmodule LoggerTelegramBackend do
   defp configure_metadata(:all), do: :all
   defp configure_metadata(metadata), do: Enum.reverse(metadata)
 
-  defp log_event(lvl, msg, ts, md, %{sender: sender, sender_args: sender_args, metadata: keys}) do
-    event = %{
-      level: lvl,
-      message: msg,
-      metadata: take_metadata(md, keys),
-      timestamp: ts
-    }
+  defp log_event(lvl, msg, _ts, md, %State{sender: sender, sender_args: args, metadata: keys}) do
+    metadata = take_metadata(md, keys)
 
-    Manager.add_event({sender, sender_args, event})
+    Formatter.format_event(msg, lvl, metadata)
+    |> sender.send_message(args)
   end
 
   defp take_metadata(metadata, :all), do: metadata

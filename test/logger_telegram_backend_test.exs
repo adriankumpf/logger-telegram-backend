@@ -89,7 +89,7 @@ defmodule LoggerTelegramBackendTest do
 end
 
 defmodule TestSender do
-  def send_message(text) do
+  def send_message(text, _opts) do
     send(:logger_telegram_backend_test, {:text, text})
     :ok
   end

@@ -22,14 +22,15 @@ send a message first. Afterwards, retrieve your `chat_id` with
 `$ curl -X GET https://api.telegram.org/botYOUR_TOKEN/getUpdates`.
 
 Then add `LoggerTelegramBackend` to the `:backends` configuration, configure
-the telegram `chat_id` and bot `token`:
+the telegram `chat_id` and bot `token`(and `proxy`, if necessary):
 
 ```elixir
 config :logger, backends: [LoggerTelegramBackend, :console]
 
 config :logger, :telegram,
   chat_id: "$chatId",
-  token: "$botToken"
+  token: "$botToken",
+  proxy: "socks5://127.0.0.1:9050"
 ```
 
 The logger configuration is read at runtime from the application environment so

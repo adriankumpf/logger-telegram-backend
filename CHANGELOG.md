@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2018-11-28
+
+### Added
+
+- Add proxy support (from [@mvalitov](https://github.com/mvalitov))
+
 ## [1.1.0] - 2018-11-26
 
 ### Changed
@@ -10,7 +16,7 @@
 - Remove `GenStage` and simplify the overall event handling logic
 - Update dependencies
 
-## [1.0.3] - 2018-03-01
+## [1.0.3] - 2018-05-25
 
 ### Added
 
@@ -39,7 +45,8 @@
 
 ## [1.0.0] - 2018-01-14
 
-[unreleased]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.1.0...HEAD
+[unreleased]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.0.3...v1.1.0
 [1.0.3]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.0.1...v1.0.2

@@ -11,7 +11,7 @@ defmodule LoggerTelegramBackend do
   alias LoggerTelegramBackend.{Formatter, Telegram}
 
   @default_name :telegram
-  @default_sender {Telegram, [:token, :chat_id]}
+  @default_sender {Telegram, [:token, :chat_id, :proxy]}
   @default_metadata [:line, :function, :module, :application, :file]
 
   @impl :gen_event

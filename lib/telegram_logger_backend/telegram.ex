@@ -4,14 +4,15 @@ defmodule LoggerTelegramBackend.Telegram do
   alias HTTPoison.{Response, Error}
 
   def send_message(text, opts) when is_binary(text) and is_list(opts) do
-    post("https://api.telegram.org/bot#{Keyword.fetch!(opts, :token)}/sendMessage",
-      [
-        text: text,
-        chat_id: Keyword.fetch!(opts, :chat_id),
-        parse_mode: "HTML"
-      ],
-      make_options(opts)
-    )
+    token = Keyword.fetch!(opts, :token)
+
+    data = [
+      text: text,
+      chat_id: Keyword.fetch!(opts, :chat_id),
+      parse_mode: "HTML"
+    ]
+
+    post("https://api.telegram.org/bot#{token}/sendMessage", data, make_options(opts))
   end
 
   defp post(url, data, options) do
@@ -24,7 +25,9 @@ defmodule LoggerTelegramBackend.Telegram do
 
   defp make_options(opts) do
     case Keyword.fetch(opts, :proxy) do
-      :error -> []
+      :error ->
+        []
+
       {:ok, proxy} ->
         proxy_options(proxy)
     end
@@ -32,12 +35,13 @@ defmodule LoggerTelegramBackend.Telegram do
 
   defp proxy_options(proxy) do
     uri = URI.parse(proxy)
+
     options =
       case uri.scheme do
         "socks5" -> [proxy: {:socks5, String.to_charlist(uri.host), uri.port}]
-        _-> [proxy: String.to_charlist(proxy)]
+        _ -> [proxy: String.to_charlist(proxy)]
       end
-    [ssl: [verify: :verify_none],
-    hackney: [insecure: true]] ++ options
+
+    [ssl: [verify: :verify_none], hackney: [insecure: true]] ++ options
   end
 end

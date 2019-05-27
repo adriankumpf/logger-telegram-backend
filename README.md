@@ -29,7 +29,7 @@ config :logger, backends: [LoggerTelegramBackend, :console]
 
 config :logger, :telegram,
   chat_id: "$chatId",
-  token: "$botToken",
+  token: "$botToken"
 ```
 
 The logger configuration is read at runtime from the application environment so
@@ -100,5 +100,5 @@ config :logger, :telegram_filter,
 config :logger, :telegram_level,
   chat_id: "$chatId",
   token: "$botToken",
-  level: :warn,
+  level: :warn
 ```

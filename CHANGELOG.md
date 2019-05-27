@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.2.1] - 2019-05-27
+
+### Changed
+
+- Bump httpoison from 1.4.0 to 1.5.1
+- Bump ex_doc from 0.19.1 to 0.20.2
+
 ## [1.2.0] - 2018-11-28
 
 ### Added
@@ -45,7 +52,8 @@
 
 ## [1.0.0] - 2018-01-14
 
-[unreleased]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.2.0...HEAD
+[unreleased]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.0.3...v1.1.0
 [1.0.3]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.0.2...v1.0.3

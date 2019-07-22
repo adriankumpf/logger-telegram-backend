@@ -8,7 +8,7 @@ Add `:logger_telegram_backend` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:logger_telegram_backend, "~> 1.2"}]
+  [{:logger_telegram_backend, "~> 1.3"}]
 end
 ```
 

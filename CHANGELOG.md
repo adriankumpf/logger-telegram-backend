@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.3.0] - 2019-07-22
+
+### Changed
+
+- Respect maximum message length to avoid [MESSAGE_TOO_LONG errors](https://core.telegram.org/method/messages.sendMessage#return-errors)
+- Bump ex_doc from 0.20.2 to 0.21.1
+
 ## [1.2.1] - 2019-05-27
 
 ### Changed
@@ -52,7 +59,8 @@
 
 ## [1.0.0] - 2018-01-14
 
-[unreleased]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.2.1...HEAD
+[unreleased]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.0.3...v1.1.0

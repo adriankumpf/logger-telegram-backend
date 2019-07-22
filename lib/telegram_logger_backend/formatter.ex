@@ -1,19 +1,32 @@
 defmodule LoggerTelegramBackend.Formatter do
   @moduledoc false
 
+  @max_length 4096
+
   def format_event(message, level, metadata) do
-    """
-    <b>[#{level}]</b> #{format_message(message)}
-    <pre>#{format_metadata(metadata)}</pre>
-    """
+    level_str = "[#{level}]"
+    metadata_str = format_metadata(metadata)
+
+    max_length = @max_length - String.length(level_str) - String.length(metadata_str) - 1
+    message_str = format_message(message, max_length)
+
+    "<b>#{level_str}</b> " <> message_str <> "\n<pre>#{metadata_str}</pre>"
   end
 
-  defp format_message(message) do
+  defp format_message(message, max_length) do
     message
     |> to_string
     |> String.trim()
+    |> limit_length(max_length)
     |> escape_special_chars()
     |> highlight_title()
+  end
+
+  defp limit_length(str, max) do
+    case String.split_at(str, max - 3) do
+      {m, ""} -> m
+      {m, _} -> m <> "..."
+    end
   end
 
   defp escape_special_chars(message) do

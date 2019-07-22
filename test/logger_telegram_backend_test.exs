@@ -4,7 +4,8 @@ defmodule LoggerTelegramBackendTest do
   require Logger
 
   setup_all do
-    Logger.remove_backend(:console)
+    :ok = Logger.configure(truncate: :infinity)
+    :ok = Logger.remove_backend(:console)
   end
 
   test "logs the message to the specified sender" do
@@ -32,14 +33,52 @@ defmodule LoggerTelegramBackendTest do
     }
   end
 
+  test "shortens the message if necessary" do
+    :ok = configure(metadata: [:function, :module])
+
+    message = List.duplicate("E", 9999) |> to_string
+    Logger.info(message)
+    assert_receive {:text, log}
+
+    assert log ==
+             """
+             <b>[info]</b> <b>#{List.duplicate("E", 4000)}...</b>
+             <pre>Function: \"test shortens the message if necessary/1\"
+             Module: LoggerTelegramBackendTest</pre>
+             """
+             |> String.trim_trailing()
+  end
+
+  test "shortens the message based on its graphemes not bytes" do
+    :ok = configure(metadata: [])
+
+    for grapheme <- ["A", "é", "💜"] do
+      message = List.duplicate(grapheme, 9999) |> to_string
+      Logger.info(message)
+
+      assert_receive {:text, log}
+      assert log == "<b>[info]</b> <b>#{List.duplicate(grapheme, 4086)}...</b>\n<pre></pre>"
+    end
+  end
+
+  test "shortens the message and escapes special chars afterwards" do
+    :ok = configure(metadata: [])
+
+    message = List.duplicate("&", 9999) |> to_string
+    Logger.info(message)
+
+    assert_receive {:text, log}
+    assert log == "<b>[info]</b> <b>#{List.duplicate("&amp;", 4086)}...</b>\n<pre></pre>"
+  end
+
   test "escapes special chars" do
     :ok = configure(metadata: [])
 
     Logger.info("<>&")
     Logger.info("<code>FOO</code>")
 
-    assert_receive {:text, "<b>[info]</b> <b>&lt;&gt;&amp;</b>\n<pre></pre>\n"}
-    assert_receive {:text, "<b>[info]</b> <b>&lt;code&gt;FOO&lt;/code&gt;</b>\n<pre></pre>\n"}
+    assert_receive {:text, "<b>[info]</b> <b>&lt;&gt;&amp;</b>\n<pre></pre>"}
+    assert_receive {:text, "<b>[info]</b> <b>&lt;code&gt;FOO&lt;/code&gt;</b>\n<pre></pre>"}
   end
 
   test "logs multiple message smoothly" do

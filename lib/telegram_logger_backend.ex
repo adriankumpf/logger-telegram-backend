@@ -5,7 +5,7 @@ defmodule LoggerTelegramBackend do
 
   @behaviour :gen_event
 
-  defstruct [:name, :level, :metadata, :metadata_filter, :sender, :sender_args]
+  defstruct [:name, :level, :metadata, :metadata_filter, :sender, :sender_args, :http_client]
   alias __MODULE__, as: State
 
   alias LoggerTelegramBackend.{Formatter, Telegram}
@@ -13,6 +13,11 @@ defmodule LoggerTelegramBackend do
   @default_name :telegram
   @default_sender {Telegram, [:token, :chat_id, :proxy]}
   @default_metadata [:line, :function, :module, :application, :file]
+  @default_http_client (cond do
+                          Code.ensure_loaded?(:hackney) -> __MODULE__.HTTPClient.Hackney
+                          Code.ensure_loaded?(Mint.HTTP) -> __MODULE__.HTTPClient.Mint
+                          true -> __MODULE__.HTTPClient.Hackney
+                        end)
 
   @impl :gen_event
   def init(__MODULE__) do
@@ -81,11 +86,13 @@ defmodule LoggerTelegramBackend do
     level = Keyword.get(config, :level)
     metadata = Keyword.get(config, :metadata, @default_metadata)
     metadata_filter = Keyword.get(config, :metadata_filter)
+    http_client = Keyword.get(config, :http_client, @default_http_client)
 
     %State{
       state
       | sender: sender,
         sender_args: Keyword.take(config, sender_args),
+        http_client: http_client,
         metadata: configure_metadata(metadata),
         level: level,
         metadata_filter: metadata_filter
@@ -95,11 +102,11 @@ defmodule LoggerTelegramBackend do
   defp configure_metadata(:all), do: :all
   defp configure_metadata(metadata), do: Enum.reverse(metadata)
 
-  defp log_event(lvl, msg, _ts, md, %State{sender: sender, sender_args: args, metadata: keys}) do
+  defp log_event(lvl, msg, _ts, md, %State{sender: sender, metadata: keys} = state) do
     metadata = take_metadata(md, keys)
 
     Formatter.format_event(msg, lvl, metadata)
-    |> sender.send_message(args)
+    |> sender.send_message([{:http_client, state.http_client} | state.sender_args])
   end
 
   defp take_metadata(metadata, :all), do: metadata

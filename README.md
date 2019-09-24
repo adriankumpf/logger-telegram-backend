@@ -50,9 +50,14 @@ The following options are available:
   to `:all` gets all metadata.
 - `:metadata_filter` - the metadata which is required in order for a message
   to be logged. Example: `metadata_filter: [application: :ui]`.
-- `:proxy` - connect via an HTTP tunnel or a socks5 proxy.
+- `:proxy` - connect via an HTTP tunnel or a socks5 proxy (only available when
+  using `:hackney`).
   See the [hackney docs](https://github.com/benoitc/hackney#proxy-a-connection)
   for further information.
+- `:http_client` - explicitly select the HTTP client (either
+  `LoggerTelegramBackend.HTTPClient.Hackney` or
+  `LoggerTelegramBackend.HTTPClient.Mint`). Picks either of which is installed
+  as transitive or direct dependency.
 
 #### Examples
 

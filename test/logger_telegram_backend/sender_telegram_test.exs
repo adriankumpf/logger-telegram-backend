@@ -2,7 +2,7 @@ defmodule SenderTelegramTest do
   use ExUnit.Case
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
-  alias LoggerTelegramBackend.Telegram
+  alias LoggerTelegramBackend.{Telegram, HTTPClient}
 
   setup do
     ExVCR.Config.cassette_library_dir("test/fixture/vcr_cassettes")
@@ -16,7 +16,12 @@ defmodule SenderTelegramTest do
 
   test "send_message" do
     use_cassette "send_message" do
-      assert :ok = Telegram.send_message("tach", token: "$token", chat_id: "$chatId")
+      assert :ok =
+               Telegram.send_message("tach",
+                 http_client: HTTPClient.Hackney,
+                 token: "$token",
+                 chat_id: "$chatId"
+               )
     end
   end
 end

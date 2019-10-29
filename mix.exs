@@ -28,7 +28,7 @@ defmodule LoggerTelegramBackend.Mixfile do
       {:ex_doc, "~> 0.18", only: :dev, runtime: false},
       {:exvcr, "~> 0.10", only: :test},
       {:hackney, "~> 1.15", optional: true},
-      {:mint, "~> 0.4", optional: true},
+      {:mint, "~> 1.0", optional: true},
       {:castore, "~> 0.1", optional: true}
     ]
   end

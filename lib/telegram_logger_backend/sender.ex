@@ -21,13 +21,12 @@ defmodule LoggerTelegramBackend.Sender do
     quote do
       @behaviour LoggerTelegramBackend.Sender
 
-      @base_url unquote(Keyword.fetch!(opts, :base_url))
-      @adapter unquote(Keyword.fetch!(opts, :adapter))
+      @adapter {Tesla.Adapter.Hackney, pool: :logger_telegram_backend}
 
       @impl true
       def client(opts \\ []) do
         {adapter, opts} = Keyword.pop(opts, :adapter, @adapter)
-        {base_url, opts} = Keyword.pop(opts, :base_url, @base_url)
+        {base_url, opts} = Keyword.pop(opts, :base_url, unquote(Keyword.fetch!(opts, :base_url)))
 
         middlewares = [
           {Tesla.Middleware.BaseUrl, base_url},

@@ -1,7 +1,8 @@
 defmodule LoggerTelegramBackend do
-  @moduledoc """
-  A logger backend for posting messages to [Telegram]( https://telegram.org/).
-  """
+  @moduledoc "README.md"
+             |> File.read!()
+             |> String.split("<!-- MDOC !-->")
+             |> Enum.fetch!(1)
 
   @behaviour :gen_event
 

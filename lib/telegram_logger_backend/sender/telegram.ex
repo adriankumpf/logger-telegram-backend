@@ -1,25 +1,9 @@
-defmodule LoggerTelegramBackend.Telegram do
-  @behaviour LoggerTelegramBackend.Sender
-
+defmodule LoggerTelegramBackend.Sender.Telegram do
   @moduledoc false
 
-  @base_url "https://api.telegram.org"
-  @adapter {Tesla.Adapter.Hackney, pool: :logger_telegram_backend}
-
-  @impl true
-  def client(opts \\ []) do
-    {adapter, opts} = Keyword.pop(opts, :adapter, @adapter)
-    {base_url, opts} = Keyword.pop(opts, :base_url, @base_url)
-
-    middlewares = [
-      {Tesla.Middleware.BaseUrl, base_url},
-      {Tesla.Middleware.Headers, [{"user-agent", ""}]},
-      Tesla.Middleware.FormUrlencoded,
-      {Tesla.Middleware.Opts, opts}
-    ]
-
-    Tesla.client(middlewares, adapter)
-  end
+  use LoggerTelegramBackend.Sender,
+    base_url: "https://api.telegram.org",
+    adapter: {Tesla.Adapter.Hackney, pool: :logger_telegram_backend}
 
   @impl true
   def send_message(client, text, opts) when is_binary(text) do

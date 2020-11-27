@@ -7,13 +7,14 @@ defmodule LoggerTelegramBackend do
   @behaviour :gen_event
 
   defmodule State do
+    @moduledoc false
     defstruct [:name, :level, :metadata, :metadata_filter, :send_message]
   end
 
-  alias LoggerTelegramBackend.{Formatter, Telegram}
+  alias LoggerTelegramBackend.{Formatter, Sender}
 
   @default_name :telegram
-  @default_sender {Telegram, [:token, :chat_id, :proxy]}
+  @default_sender {Sender.Telegram, [:token, :chat_id, :proxy]}
   @default_metadata [:line, :function, :module, :application, :file]
 
   @impl :gen_event

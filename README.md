@@ -15,7 +15,7 @@ Add `:logger_telegram_backend` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:logger_telegram_backend, "~> 1.3"},
+    {:logger_telegram_backend, "~> 2.0.0-rc.0"},
     {:hackney, "~> 1.16"}, # optional, but recommended adapter
   ]
 end

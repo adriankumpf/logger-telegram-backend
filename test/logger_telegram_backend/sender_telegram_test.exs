@@ -16,7 +16,8 @@ defmodule SenderTelegramTest do
 
   test "send_message" do
     use_cassette "send_message" do
-      assert :ok = Telegram.send_message("tach", token: "$token", chat_id: "$chatId")
+      client = Telegram.client()
+      assert :ok = Telegram.send_message(client, "tach", token: "$token", chat_id: "$chatId")
     end
   end
 end

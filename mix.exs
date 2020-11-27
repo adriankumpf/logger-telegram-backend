@@ -23,15 +23,14 @@ defmodule LoggerTelegramBackend.Mixfile do
   end
 
   def application do
-    [
-      extra_applications: [:logger]
-    ]
+    [extra_applications: [:logger]]
   end
 
   defp deps do
     [
       {:exvcr, "~> 0.10", only: :test},
-      {:httpoison, "~> 1.0"}
+      {:tesla, "~> 1.4"},
+      {:hackney, "~> 1.15", optional: true}
     ]
   end
 

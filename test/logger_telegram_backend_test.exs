@@ -128,7 +128,15 @@ defmodule LoggerTelegramBackendTest do
 end
 
 defmodule TestSender do
-  def send_message(text, _opts) do
+  @behaviour LoggerTelegramBackend.Sender
+
+  @impl true
+  def client(_opts) do
+    Tesla.client([])
+  end
+
+  @impl true
+  def send_message(_client, text, _opts) do
     send(:logger_telegram_backend_test, {:text, text})
     :ok
   end

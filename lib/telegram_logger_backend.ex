@@ -7,7 +7,7 @@ defmodule LoggerTelegramBackend do
   @behaviour :gen_event
 
   defmodule State do
-    defstruct [:name, :level, :metadata, :metadata_filter, :sender, :sender_args]
+    defstruct [:name, :level, :metadata, :metadata_filter, :send_message]
   end
 
   alias LoggerTelegramBackend.{Formatter, Telegram}
@@ -78,30 +78,33 @@ defmodule LoggerTelegramBackend do
   end
 
   defp initialize(config, %State{} = state) do
-    {sender, sender_args} = Keyword.get(config, :sender, @default_sender)
+    metadata = config[:metadata] || @default_metadata
+    {sender, sender_opts} = config[:sender] || @default_sender
 
-    level = Keyword.get(config, :level)
-    metadata = Keyword.get(config, :metadata, @default_metadata)
-    metadata_filter = Keyword.get(config, :metadata_filter)
+    sender_opts = Keyword.take(config, sender_opts)
+    client_opts = Keyword.take(config, [:base_url, :adapter])
+
+    client = sender.client(client_opts)
+    send_message = &sender.send_message(client, &1, sender_opts)
 
     %State{
       state
-      | sender: sender,
-        sender_args: Keyword.take(config, sender_args),
+      | level: config[:level],
         metadata: configure_metadata(metadata),
-        level: level,
-        metadata_filter: metadata_filter
+        metadata_filter: config[:metadata_filter],
+        send_message: send_message
     }
   end
 
   defp configure_metadata(:all), do: :all
   defp configure_metadata(metadata), do: Enum.reverse(metadata)
 
-  defp log_event(lvl, msg, _ts, md, %State{sender: sender, sender_args: args, metadata: keys}) do
-    metadata = take_metadata(md, keys)
+  defp log_event(level, message, _ts, metadata, %State{} = state) do
+    metadata = take_metadata(metadata, state.metadata)
 
-    Formatter.format_event(msg, lvl, metadata)
-    |> sender.send_message(args)
+    message
+    |> Formatter.format_event(level, metadata)
+    |> state.send_message.()
   end
 
   defp take_metadata(metadata, :all), do: metadata

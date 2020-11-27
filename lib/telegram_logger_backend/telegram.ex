@@ -1,25 +1,43 @@
 defmodule LoggerTelegramBackend.Telegram do
+  @behaviour LoggerTelegramBackend.Sender
+
   @moduledoc false
 
-  alias HTTPoison.{Response, Error}
+  @base_url "https://api.telegram.org"
+  @adapter {Tesla.Adapter.Hackney, pool: :logger_telegram_backend}
 
-  def send_message(text, opts) when is_binary(text) and is_list(opts) do
-    token = Keyword.fetch!(opts, :token)
+  @impl true
+  def client(opts \\ []) do
+    {adapter, opts} = Keyword.pop(opts, :adapter, @adapter)
+    {base_url, opts} = Keyword.pop(opts, :base_url, @base_url)
 
-    data = [
-      text: text,
-      chat_id: Keyword.fetch!(opts, :chat_id),
-      parse_mode: "HTML"
+    middlewares = [
+      {Tesla.Middleware.BaseUrl, base_url},
+      {Tesla.Middleware.Headers, [{"user-agent", ""}]},
+      Tesla.Middleware.FormUrlencoded,
+      {Tesla.Middleware.Opts, opts}
     ]
 
-    post("https://api.telegram.org/bot#{token}/sendMessage", data, make_options(opts))
+    Tesla.client(middlewares, adapter)
   end
 
-  defp post(url, data, options) do
-    case HTTPoison.request(:post, String.to_charlist(url), {:form, data}, [], options) do
-      {:ok, %Response{status_code: 200}} -> :ok
-      {:ok, %Response{body: body, status_code: code}} -> {:error, {:bad_status_code, code, body}}
-      {:error, %Error{reason: reason}} -> {:error, reason}
+  @impl true
+  def send_message(client, text, opts) when is_binary(text) do
+    token = Keyword.fetch!(opts, :token)
+    chat_id = Keyword.fetch!(opts, :chat_id)
+
+    response =
+      Tesla.request(client,
+        method: :post,
+        url: "/bot#{token}/sendMessage",
+        body: [text: text, chat_id: chat_id, parse_mode: "HTML"],
+        opts: make_options(opts)
+      )
+
+    case response do
+      {:ok, %Tesla.Env{status: 200}} -> :ok
+      {:ok, %Tesla.Env{body: body}} -> {:error, body}
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -29,19 +47,15 @@ defmodule LoggerTelegramBackend.Telegram do
         []
 
       {:ok, proxy} ->
-        proxy_options(proxy)
+        uri = URI.parse(proxy)
+
+        proxy =
+          case uri.scheme do
+            "socks5" -> {:socks5, String.to_charlist(uri.host), uri.port}
+            _other -> String.to_charlist(proxy)
+          end
+
+        [ssl: [verify: :verify_none], hackney: [insecure: true], proxy: proxy]
     end
-  end
-
-  defp proxy_options(proxy) do
-    uri = URI.parse(proxy)
-
-    options =
-      case uri.scheme do
-        "socks5" -> [proxy: {:socks5, String.to_charlist(uri.host), uri.port}]
-        _ -> [proxy: String.to_charlist(proxy)]
-      end
-
-    [ssl: [verify: :verify_none], hackney: [insecure: true]] ++ options
   end
 end

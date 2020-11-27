@@ -5,8 +5,9 @@ defmodule LoggerTelegramBackend do
 
   @behaviour :gen_event
 
-  defstruct [:name, :level, :metadata, :metadata_filter, :sender, :sender_args]
-  alias __MODULE__, as: State
+  defmodule State do
+    defstruct [:name, :level, :metadata, :metadata_filter, :sender, :sender_args]
+  end
 
   alias LoggerTelegramBackend.{Formatter, Telegram}
 
@@ -69,13 +70,13 @@ defmodule LoggerTelegramBackend do
     end
   end
 
-  defp configure(options, state) do
+  defp configure(options, %State{} = state) do
     config = Keyword.merge(Application.get_env(:logger, :telegram), options)
     Application.put_env(:logger, :telegram, config)
     initialize(config, state)
   end
 
-  defp initialize(config, state) do
+  defp initialize(config, %State{} = state) do
     {sender, sender_args} = Keyword.get(config, :sender, @default_sender)
 
     level = Keyword.get(config, :level)

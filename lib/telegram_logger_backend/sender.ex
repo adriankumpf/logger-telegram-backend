@@ -32,8 +32,8 @@ defmodule LoggerTelegramBackend.Sender do
         middlewares = [
           {Tesla.Middleware.BaseUrl, base_url},
           {Tesla.Middleware.Headers, [{"user-agent", ""}]},
-          Tesla.Middleware.FormUrlencoded,
           {Tesla.Middleware.Opts, opts}
+          | unquote(opts[:middlewares] || [])
         ]
 
         Tesla.client(middlewares, adapter)

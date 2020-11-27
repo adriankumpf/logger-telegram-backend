@@ -3,6 +3,7 @@ defmodule LoggerTelegramBackend.Sender.Telegram do
 
   use LoggerTelegramBackend.Sender,
     base_url: "https://api.telegram.org",
+    middlewares: [Tesla.Middleware.FormUrlencoded],
     adapter: {Tesla.Adapter.Hackney, pool: :logger_telegram_backend}
 
   @impl true

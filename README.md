@@ -15,8 +15,8 @@ Add `:logger_telegram_backend` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:logger_telegram_backend, "~> 2.0.0-rc.0"},
-    {:hackney, "~> 1.16"}, # optional, but recommended adapter
+    {:logger_telegram_backend, "~> 2.0.0"},
+    {:hackney, "~> 1.17"}, # optional, but recommended adapter
   ]
 end
 ```
@@ -73,7 +73,7 @@ config :logger, :telegram,
 Note: You'll need to add Finch instead of hackney to your list of dependencies:
 
 ```elixir
-  {:finch, "~> 0.5"}
+  {:finch, "~> 0.6"}
 ```
 
 ##### With Proxy
@@ -108,3 +108,4 @@ config :logger, :telegram_level,
   token: "$botToken",
   level: :warn
 ```
+

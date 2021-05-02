@@ -42,7 +42,7 @@ defmodule LoggerTelegramBackend do
 
   def handle_event({level, _gl, {Logger, message, timestamp, metadata}}, state) do
     if meet_level?(level, state.level) and metadata_matches?(metadata, state.metadata_filter) do
-      :ok = log_event(level, message, timestamp, metadata, state)
+      _ = log_event(level, message, timestamp, metadata, state)
     end
 
     {:ok, state}

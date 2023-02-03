@@ -14,7 +14,7 @@
 
 ### Breaking Changes
 
-- Make hackney an optional dependency. To use the default `hackney` based adatper, add it to the list of dependencies:
+- Make hackney an optional dependency. To use the default `hackney` based adapter, add it to the list of dependencies:
 
   ```elixir
   def deps do

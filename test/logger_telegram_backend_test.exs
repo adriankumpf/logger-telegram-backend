@@ -97,7 +97,7 @@ defmodule LoggerTelegramBackendTest do
 
     Logger.debug("dbg: foo")
     Logger.info("info: foo")
-    Logger.warn("warn: foo")
+    Logger.warning("warn: foo")
 
     refute_receive {:text, _}
   end
@@ -106,7 +106,7 @@ defmodule LoggerTelegramBackendTest do
     :ok = configure(metadata_filter: [foo: :bar])
 
     Logger.debug("dbg: foo")
-    Logger.warn("warn: foo", foo: :baz)
+    Logger.warning("warn: foo", foo: :baz)
     Logger.info("info: foo", application: :app)
 
     refute_receive {:text, _}

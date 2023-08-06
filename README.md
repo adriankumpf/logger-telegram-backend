@@ -15,7 +15,7 @@ Add `:logger_telegram_backend` and `:hackney` to your list of dependencies in `m
 ```elixir
 def deps do
   [
-    {:logger_telegram_backend, "~> 3.0"},
+    {:logger_telegram_backend, "~> 3.0-rc"},
     {:logger_backends, "~> 1.0"},
     {:hackney, "~> 1.18"},
   ]

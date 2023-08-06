@@ -60,6 +60,7 @@ defmodule LoggerTelegramBackend do
   ## Private
 
   defp meet_level?(_lvl, nil), do: true
+  defp meet_level?(:warn, min), do: meet_level?(:warning, min)
   defp meet_level?(lvl, min), do: Logger.compare_levels(lvl, min) != :lt
 
   defp metadata_matches?(_metadata, nil), do: true

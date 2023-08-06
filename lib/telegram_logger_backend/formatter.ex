@@ -1,6 +1,8 @@
 defmodule LoggerTelegramBackend.Formatter do
   @moduledoc false
 
+  alias LoggerTelegramBackend.HTML
+
   @max_length 4096
 
   def format_event(message, level, metadata) do
@@ -13,12 +15,19 @@ defmodule LoggerTelegramBackend.Formatter do
     "<b>#{level_str}</b> " <> message_str <> "\n<pre>#{metadata_str}</pre>"
   end
 
+  defp format_metadata(metadata) do
+    metadata
+    |> Enum.map(fn {k, v} -> "#{k |> to_string() |> String.capitalize()}: #{inspect(v)}" end)
+    |> Enum.join("\n")
+    |> HTML.escape()
+  end
+
   defp format_message(message, max_length) do
     message
     |> to_string
     |> String.trim()
     |> limit_length(max_length)
-    |> escape_special_chars()
+    |> HTML.escape()
     |> highlight_title()
   end
 
@@ -27,18 +36,6 @@ defmodule LoggerTelegramBackend.Formatter do
       {m, ""} -> m
       {m, _} -> m <> "..."
     end
-  end
-
-  defp escape_special_chars(message) do
-    special_chars = [
-      {"&", "&amp;"},
-      {"<", "&lt;"},
-      {">", "&gt;"}
-    ]
-
-    Enum.reduce(special_chars, message, fn {c, r}, acc ->
-      String.replace(acc, c, r)
-    end)
   end
 
   defp highlight_title(message) do
@@ -50,10 +47,4 @@ defmodule LoggerTelegramBackend.Formatter do
 
   defp do_highlight_title([title]), do: ["<b>#{title}</b>"]
   defp do_highlight_title([title | rest]), do: ["<b>#{title}</b>"] ++ rest
-
-  defp format_metadata(metadata) do
-    metadata
-    |> Enum.map(fn {k, v} -> "#{k |> to_string() |> String.capitalize()}: #{inspect(v)}" end)
-    |> Enum.join("\n")
-  end
 end

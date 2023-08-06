@@ -118,14 +118,14 @@ defmodule LoggerTelegramBackendTest do
     assert log == "<b>[info]</b> <b>#{List.duplicate("&amp;", 4086)}...</b>\n<pre></pre>"
   end
 
-  @tag metadata: []
-  test "escapes special chars in the message" do
-    Logger.info("<msg=&>")
+  @tag metadata: [:unsafe]
+  test "escapes special chars in the message and metadata" do
+    Logger.info("<msg=&>", unsafe: "<metadata=&>")
 
     assert_receive {:send_message, message, _}
 
     assert message ==
-             "<b>[info]</b> <b>&lt;msg=&amp;&gt;</b>\n<pre></pre>"
+             "<b>[info]</b> <b>&lt;msg=&amp;&gt;</b>\n<pre>Unsafe: \"&lt;metadata=&amp;&gt;\"</pre>"
   end
 
   test "logs multiple message smoothly" do

@@ -2,14 +2,14 @@ defmodule LoggerTelegramBackend.Mixfile do
   use Mix.Project
 
   @name "LoggerTelegramBackend"
-  @version "2.0.1"
+  @version "3.0.0-dev"
   @url "https://github.com/adriankumpf/logger-telegram-backend"
 
   def project do
     [
       app: :logger_telegram_backend,
       version: @version,
-      elixir: "~> 1.5",
+      elixir: "~> 1.12",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       package: package(),
@@ -30,6 +30,7 @@ defmodule LoggerTelegramBackend.Mixfile do
     [
       {:exvcr, "~> 0.10", only: :test},
       {:tesla, "~> 1.4"},
+      {:logger_backends, "~> 1.0", only: :test},
       {:hackney, "~> 1.15", optional: true}
     ]
   end

@@ -10,7 +10,7 @@ A logger backend for [Telegram](https://telegram.org/).
 
 ## Installation
 
-Add `:logger_telegram_backend` to your list of dependencies in `mix.exs`:
+Add `:logger_telegram_backend` and `:hackney` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -143,8 +143,6 @@ config :logger, LoggerTelegramBackend,
   chat_id: "$chatId",
   token: "$botToken",
   hackney_opts: [
-    ssl: [verify: :verify_none],
-    hackney: [insecure: true],
     proxy: {:socks5, ~c"127.0.0.1", 9050}
   ]
 ```

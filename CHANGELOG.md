@@ -1,5 +1,113 @@
 # Changelog
 
+## [3.0.0-rc.0] - 2023-08-06
+
+### Breaking Changes
+
+- Allow to customize the HTTP client
+- Remove `:proxy` option
+
+### Changes
+
+- Log a warning if sending fails
+
+### Bug fixes
+
+- Escape metadata fields
+- Fix deprecation warnings
+
+### Upgrade Instructions
+
+#### Migrate to `:logger_backends`
+
+If you are using Elixir 1.15, add `:logger_telegram_backend` to your list of dependencies in `mix.exs`:
+
+```elixir
+  def deps do
+    [
+      {:logger_telegram_backend, "~> 3.0-rc"},
+      {:logger_backends, "~> 1.0"}
+    ]
+  end
+```
+
+In your `Application.start/2` callback, add the `LoggerTelegramBackend` backend:
+
+```elixir
+@impl true
+def start(_type, _args) do
+  LoggerBackends.add(LoggerTelegramBackend)
+
+  # ...
+end
+```
+
+Remove the `:backends` configuration from `:logger`:
+
+```elixir
+config :logger,
+  # Remove this line
+  backends: [LoggerTelegramBackend, :console]
+```
+
+#### Config
+
+Configuration is now done via `config :logger, LoggerTelegramBackend`.
+
+**Before:**
+
+```elixir
+config :logger, :telegram,
+  # ...
+```
+
+**After:**
+
+```elixir
+config :logger, LoggerTelegramBackend,
+  # ...
+```
+
+#### HTTP client (optional)
+
+Remove the `:adapter` configuration:
+
+```elixir
+config :logger, LoggerTelegramBackend,
+  # Remove this line
+  adapter: {Tesla.Adapter.Finch, name: MyFinch}
+```
+
+Add the `:client` option and pass your own module that implements the `LoggerTelegramBackend.HTTPClient` behaviour:
+
+```elixir
+config :logger, LoggerTelegramBackend,
+  client: MyFinchClient
+```
+
+See the documentation for `LoggerTelegramBackend.HTTPClient` and the README for more information.
+
+#### SOCKS5 Proxy (optional)
+
+Remove the `:proxy` configuration:
+
+```elixir
+config :logger, LoggerTelegramBackend,
+  # Remove this line
+  proxy: "socks5://127.0.0.1:9050"
+```
+
+And add the following `:hackney_opts`:
+
+```elixir
+config :logger, LoggerTelegramBackend,
+  hackney_opts: [
+    ssl: [verify: :verify_none],
+    hackney: [insecure: true],
+    proxy: {:socks5, ~c"127.0.0.1", 9050}
+  ]
+```
+
 ## [2.0.1] - 2021-05-02
 
 ### Fixed
@@ -82,6 +190,7 @@
 
 ## [1.0.0] - 2018-01-14
 
+[3.0.0-rc.0]: https://github.com/adriankumpf/logger-telegram-backend/compare/v2.0.1...v3.0.0-rc.0
 [2.0.1]: https://github.com/adriankumpf/logger-telegram-backend/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.3.0...v2.0.0
 [1.3.0]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.2.1...v1.3.0

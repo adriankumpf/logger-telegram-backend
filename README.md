@@ -22,7 +22,7 @@ def deps do
 end
 ```
 
-In your `c:Application.start/2` callback, add the `LoggerTelegramBackend` backend:
+In your `Application.start/2` callback, add the `LoggerTelegramBackend` backend:
 
 ```elixir
 @impl true

@@ -10,7 +10,7 @@ A logger backend for [Telegram](https://telegram.org/).
 
 ## Installation
 
-Add `:logger_telegram_backend` and `:hackney` to your list of dependencies in `mix.exs`:
+Add `:logger_telegram_backend`, `:logger_backends` and `:hackney` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -35,7 +35,7 @@ end
 
 ## Configuration
 
-First of all you need to create a [Telegram bot](https://core.telegram.org/bots). Follow the [instructions here](https://core.telegram.org/bots#6-botfather) to create one and get the `token` for the bot. Since bots are not allowed to contact users, you need to send a message first. Afterwards, retrieve your `chat_id` with `$ curl -X GET https://api.telegram.org/botYOUR_TOKEN/getUpdates`.
+First you need to create a [Telegram Bot](https://core.telegram.org/bots). Follow the [instructions here](https://core.telegram.org/bots#6-botfather) to create one and get the `token` for the bot. You will need to send a message first as bots are not allowed to contact users. Then retrieve your `chat_id` with `$ curl -X GET https://api.telegram.org/botYOUR_TOKEN/getUpdates`.
 
 Then configure the telegram `chat_id` and bot `token`:
 
@@ -47,16 +47,15 @@ config :logger, LoggerTelegramBackend,
 
 ### Options
 
-The following options are available:
+The available options are:
 
 - `:level` - the level to be logged by this backend (either `:debug`, `:info`, `:warning` or `:error`).
 
-  Note that messages are filtered by the general `:level` configuration for the `:logger` application first.
+  Note that messages are first filtered by the general `:level` configuration for the `:logger` application.
 
   Default: `nil` (all levels are logged)
 
-- `:metadata` - the metadata to be included in the telegram message. Setting `:metadata` to `:all` gets all metadata.
-
+- `:metadata` - the metadata to be included in the message. Setting `:metadata` to `:all` will get all metadata.
   Default: `[:line, :function, :module, :application, :file]`.
 
 - `:metadata_filter` - the metadata which is required in order for a message to be logged.

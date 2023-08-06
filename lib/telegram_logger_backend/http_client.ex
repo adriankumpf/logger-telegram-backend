@@ -2,7 +2,10 @@ defmodule LoggerTelegramBackend.HTTPClient do
   @moduledoc """
   Specifies the API for using a custom HTTP Client.
 
-  The default HTTP client is `LoggerTelegramBackend.HackneyClient`
+  By default, the first HTTP client in the list whose application is loaded is selected:
+
+  - `LoggerTelegramBackend.HTTPClient.Finch` (requires `:finch`)
+  - `LoggerTelegramBackend.HTTPClient.Hackney` (requires`:hackney`)
 
   To configure a different HTTP client, implement the `LoggerTelegramBackend.HTTPClient` behaviour
   and change the `:client` configuration:

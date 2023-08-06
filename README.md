@@ -10,14 +10,14 @@ A logger backend for [Telegram](https://telegram.org/).
 
 ## Installation
 
-Add `:logger_telegram_backend`, `:logger_backends` and `:hackney` to your list of dependencies in `mix.exs`:
+Add `:logger_telegram_backend`, `:logger_backends` and `:finch` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
     {:logger_telegram_backend, "~> 3.0-rc"},
     {:logger_backends, "~> 1.0"},
-    {:hackney, "~> 1.18"},
+    {:finch, "~> 1.18"},
   ]
 end
 ```
@@ -62,65 +62,35 @@ The available options are:
 
   Default: `nil`
 
-- `:client` - If you need different functionality for the HTTP client, you can define your own module that implements the `LoggerTelegramBackend.HTTPClient` behaviour and set `client` to that module
+- `:client` - If you need different functionality for the HTTP client, you can define your own module that implements the `LoggerTelegramBackend.HTTPClient` behaviour and set `client` to that module.
 
-  Default: `LoggerTelegramBackend.HackneyClient`
+  By default, selects the first client in the list whose application is loaded:
 
-- `:hackney_opts`
+  - `LoggerTelegramBackend.HTTPClient.Finch` (requires `:finch`)
+  - `LoggerTelegramBackend.HTTPClient.Hackney` (requires`:hackney`)
 
-  Default: `[pool: :logger_telegram_backend_pool]`
+- `:client_pool_opts` - The options passed to configure the pool.
 
-- `:hackney_pool_max_connections`
+  See [Finch](https://hexdocs.pm/finch/Finch.html#start_link/1) or [Hackney](https://hexdocs.pm/hackney/).
 
-  Default: `50`
+  Default: `[]`
 
-- `:hackney_pool_timeout`
+- `:client_request_opts` - The options passed on every request.
 
-  Default: `5000`
+  See [Finch](https://hexdocs.pm/finch/Finch.html#request/3) or [Hackney](https://hexdocs.pm/hackney/).
+
+  Default: `[]`
 
 ### Examples
 
-#### Finch client
+#### Custom HTTP client
 
-1. Add Finch instead of `:hackney` to your list of dependencies:
-
-   ```elixir
-    {:finch, "~> 0.16"}
-   ```
-
-2. Add a module that implements the `LoggerTelegramBackend.HTTPClient` behaviour:
-
-   ```elixir
-   defmodule MyFinchClient do
-     @behaviour LoggerTelegramBackend.HTTPClient
-
-     @finch_pool_name MyApp.Finch
-
-     @impl true
-     def child_spec do
-       Finch.child_spec(name: @finch_pool_name)
-     end
-
-     @impl true
-     def request(method, url, headers, body) do
-       req = Finch.build(method, url, headers, body)
-
-       case Finch.request(req, @finch_pool_name) do
-         {:ok, %Finch.Response{status: status, headers: headers, body: body}} ->
-           {:ok, status, headers, body}
-
-         {:error, reason} ->
-           {:error, reason}
-       end
-     end
-   end
-   ```
-
-3. Pass your client module to the `:client` option:
+1. Add a module that implements the `LoggerTelegramBackend.HTTPClient` behaviour
+2. Pass your client module to the `:client` option:
 
    ```elixir
    config :logger, LoggerTelegramBackend,
-     client: MyFinchClient,
+     client: MyClient,
      # ...
    ```
 
@@ -131,7 +101,7 @@ config :logger, LoggerTelegramBackend,
   chat_id: "$chatId",
   token: "$botToken",
   level: :info,
-  metadata: :all
+  metadata: :all,
   metadata_filter: [application: :ui]
 ```
 
@@ -141,7 +111,8 @@ config :logger, LoggerTelegramBackend,
 config :logger, LoggerTelegramBackend,
   chat_id: "$chatId",
   token: "$botToken",
-  hackney_opts: [
+  client: LoggerTelegramBackend.HTTPClient.Hackney,
+  client_request_opts: [
     proxy: {:socks5, ~c"127.0.0.1", 9050}
   ]
 ```

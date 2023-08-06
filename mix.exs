@@ -22,7 +22,7 @@ defmodule LoggerTelegramBackend.Mixfile do
         main: "readme",
         skip_undefined_reference_warnings_on: ["CHANGELOG.md"]
       ],
-      xref: [exclude: [:hackney, :hackney_pool]]
+      xref: [exclude: [:hackney, :hackney_pool, Finch]]
     ]
   end
 
@@ -35,10 +35,11 @@ defmodule LoggerTelegramBackend.Mixfile do
 
   defp deps do
     [
-      {:exvcr, "~> 0.10", only: :test},
       {:logger_backends, "~> 1.0", only: :test},
+      {:hackney, "~> 1.18", optional: true},
+      {:finch, "~> 0.16", optional: true},
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
-      {:hackney, "~> 1.18", optional: true}
+      {:exvcr, "~> 0.10", only: :test}
     ]
   end
 

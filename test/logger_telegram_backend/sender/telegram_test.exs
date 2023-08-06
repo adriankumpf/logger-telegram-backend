@@ -1,5 +1,6 @@
-defmodule SenderTelegramTest do
-  use ExUnit.Case
+defmodule LoggerTelegramBackend.Sender.TelegramTest do
+  use ExUnit.Case, async: true
+
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
   alias LoggerTelegramBackend.Sender.Telegram
@@ -16,8 +17,7 @@ defmodule SenderTelegramTest do
 
   test "send_message" do
     use_cassette "send_message" do
-      client = Telegram.client()
-      assert :ok = Telegram.send_message(client, "tach", token: "$token", chat_id: "$chatId")
+      assert :ok = Telegram.send_message("tach", token: "$token", chat_id: "$chatId")
     end
   end
 end

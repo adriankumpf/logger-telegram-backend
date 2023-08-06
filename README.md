@@ -15,9 +15,21 @@ Add `:logger_telegram_backend` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:logger_telegram_backend, "~> 2.0"},
-    {:hackney, "~> 1.17"}, # optional, but recommended adapter
+    {:logger_telegram_backend, "~> 3.0"},
+    {:logger_backends, "~> 1.0"},
+    {:hackney, "~> 1.18"},
   ]
+end
+```
+
+In your `c:Application.start/2` callback, add the `LoggerTelegramBackend` backend:
+
+```elixir
+@impl true
+def start(_type, _args) do
+  LoggerBackends.add(LoggerTelegramBackend)
+
+  # ...
 end
 ```
 
@@ -25,34 +37,98 @@ end
 
 First of all you need to create a [Telegram bot](https://core.telegram.org/bots). Follow the [instructions here](https://core.telegram.org/bots#6-botfather) to create one and get the `token` for the bot. Since bots are not allowed to contact users, you need to send a message first. Afterwards, retrieve your `chat_id` with `$ curl -X GET https://api.telegram.org/botYOUR_TOKEN/getUpdates`.
 
-Then add `LoggerTelegramBackend` to the `:backends` configuration, configure the telegram `chat_id` and bot `token`:
+Then configure the telegram `chat_id` and bot `token`:
 
 ```elixir
-config :logger, backends: [LoggerTelegramBackend, :console]
-
-config :logger, :telegram,
+config :logger, LoggerTelegramBackend,
   chat_id: "$chatId",
   token: "$botToken"
 ```
-
-The logger configuration is read at runtime from the application environment so that you can provide it via [distillerys](https://github.com/bitwalker/distillery) dynamic configuration with environment variables.
 
 ### Options
 
 The following options are available:
 
-- `:level` - the level to be logged by this backend (either `:debug`, `:info`, `:warning` or `:error`). Note that messages are filtered by the general `:level` configuration for the `:logger` application first. If not explicitly configured all levels are logged.
-- `:metadata` - the metadata to be included in the telegram message. Defaults to `[:line, :function, :module, :application, :file]`. Setting `:metadata` to `:all` gets all metadata.
-- `:metadata_filter` - the metadata which is required in order for a message to be logged. Example: `metadata_filter: [application: :ui]`.
-- `:proxy` - connect via an HTTP tunnel or a socks5 proxy. See the [hackney docs](https://github.com/benoitc/hackney#proxy-a-connection) for further information. (Only available with the default hackney adapter).
-- `:adapter` - the [Tesla adapter](https://hexdoks.pm/tesla/readme.html) for the Telegram client (default: `{Tesla.Adapter.Hackney, pool: :logger_telegram_backend}`)
+- `:level` - the level to be logged by this backend (either `:debug`, `:info`, `:warning` or `:error`).
 
-#### Examples
+  Note that messages are filtered by the general `:level` configuration for the `:logger` application first.
 
-##### With Metadata Filter
+  Default: `nil` (all levels are logged)
+
+- `:metadata` - the metadata to be included in the telegram message. Setting `:metadata` to `:all` gets all metadata.
+
+  Default: `[:line, :function, :module, :application, :file]`.
+
+- `:metadata_filter` - the metadata which is required in order for a message to be logged.
+
+  Default: `nil`
+
+- `:client` - If you need different functionality for the HTTP client, you can define your own module that implements the `LoggerTelegramBackend.HTTPClient` behaviour and set `client` to that module
+
+  Default: `LoggerTelegramBackend.HackneyClient`
+
+- `:hackney_opts`
+
+  Default: `[pool: :logger_telegram_backend_pool]`
+
+- `:hackney_pool_max_connections`
+
+  Default: `50`
+
+- `:hackney_pool_timeout`
+
+  Default: `5000`
+
+### Examples
+
+#### Finch client
+
+1. Add Finch instead of `:hackney` to your list of dependencies:
+
+   ```elixir
+    {:finch, "~> 0.16"}
+   ```
+
+2. Add a module that implements the `LoggerTelegramBackend.HTTPClient` behaviour:
+
+   ```elixir
+   defmodule MyFinchClient do
+     @behaviour LoggerTelegramBackend.HTTPClient
+
+     @finch_pool_name MyApp.Finch
+
+     @impl true
+     def child_spec do
+       Finch.child_spec(name: @finch_pool_name)
+     end
+
+     @impl true
+     def request(method, url, headers, body) do
+       req = Finch.build(method, url, headers, body)
+
+       case Finch.request(req, @finch_pool_name) do
+         {:ok, %Finch.Response{status: status, headers: headers, body: body}} ->
+           {:ok, status, headers, body}
+
+         {:error, reason} ->
+           {:error, reason}
+       end
+     end
+   end
+   ```
+
+3. Pass your client module to the `:client` option:
+
+   ```elixir
+   config :logger, LoggerTelegramBackend,
+     client: MyFinchClient,
+     # ...
+   ```
+
+#### Metadata filter
 
 ```elixir
-config :logger, :telegram,
+config :logger, LoggerTelegramBackend,
   chat_id: "$chatId",
   token: "$botToken",
   level: :info,
@@ -60,50 +136,17 @@ config :logger, :telegram,
   metadata_filter: [application: :ui]
 ```
 
-##### With Finch Adapter
+#### SOCKS5 proxy
 
 ```elixir
-config :logger, :telegram,
+config :logger, LoggerTelegramBackend,
   chat_id: "$chatId",
   token: "$botToken",
-  adapter: {Tesla.Adapter.Finch, name: MyFinch}
-```
-
-Note: You'll need to add Finch instead of hackney to your list of dependencies:
-
-```elixir
-  {:finch, "~> 0.6"}
-```
-
-##### With Proxy
-
-```elixir
-config :logger, :telegram,
-  chat_id: "$chatId",
-  token: "$botToken",
-  proxy: "socks5://127.0.0.1:9050"
-```
-
-### Multiple logger handlers
-
-Like the [LoggerFileBackend](https://github.com/onkel-dirtus/logger_file_backend) multiple logger handlers may be configured, each with different `:chat_id`s, `:level`s etc. Each handler has to be configured as a separate logger backend:
-
-```elixir
-config :logger,
-  backends: [
-    {LoggerTelegramBackend, :telegram_filter},
-    {LoggerTelegramBackend, :telegram_level},
-    :console
+  hackney_opts: [
+    ssl: [verify: :verify_none],
+    hackney: [insecure: true],
+    proxy: {:socks5, ~c"127.0.0.1", 9050}
   ]
-
-config :logger, :telegram_filter,
-  chat_id: "$chatId",
-  token: "$botToken",
-  metadata_filter: [application: :ui],
-  metadata: [:line, :function, :module, :pid]
-
-config :logger, :telegram_level,
-  chat_id: "$chatId",
-  token: "$botToken",
-  level: :warn
 ```
+
+See the [hackney docs](https://github.com/benoitc/hackney#proxy-a-connection) for further information.

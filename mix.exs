@@ -21,21 +21,24 @@ defmodule LoggerTelegramBackend.Mixfile do
         source_url: @source_url,
         main: "readme",
         skip_undefined_reference_warnings_on: ["CHANGELOG.md"]
-      ]
+      ],
+      xref: [exclude: [:hackney, :hackney_pool]]
     ]
   end
 
   def application do
-    [extra_applications: [:logger]]
+    [
+      mod: {LoggerTelegramBackend.Application, []},
+      extra_applications: [:logger]
+    ]
   end
 
   defp deps do
     [
       {:exvcr, "~> 0.10", only: :test},
-      {:tesla, "~> 1.4"},
       {:logger_backends, "~> 1.0", only: :test},
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
-      {:hackney, "~> 1.15", optional: true}
+      {:hackney, "~> 1.18", optional: true}
     ]
   end
 

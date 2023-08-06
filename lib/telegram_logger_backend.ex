@@ -8,26 +8,18 @@ defmodule LoggerTelegramBackend do
 
   defmodule State do
     @moduledoc false
-    defstruct [:name, :level, :metadata, :metadata_filter, :send_message]
+    defstruct [:level, :metadata, :metadata_filter, :send_message]
   end
 
   alias LoggerTelegramBackend.{Formatter, Sender}
 
-  @default_name :telegram
-  @default_sender {Sender.Telegram, [:token, :chat_id, :proxy]}
+  @default_sender {Sender.Telegram, [:token, :chat_id]}
   @default_metadata [:line, :function, :module, :application, :file]
 
   @impl :gen_event
   def init(__MODULE__) do
-    init({__MODULE__, @default_name})
-  end
-
-  def init({__MODULE__, name}) when is_atom(name) do
-    state =
-      Application.get_env(:logger, name)
-      |> initialize(%State{})
-
-    {:ok, state}
+    config = Application.get_env(:logger, __MODULE__, [])
+    {:ok, initialize(config, %State{})}
   end
 
   @impl :gen_event
@@ -42,13 +34,13 @@ defmodule LoggerTelegramBackend do
 
   def handle_event({level, _gl, {Logger, message, timestamp, metadata}}, state) do
     if meet_level?(level, state.level) and metadata_matches?(metadata, state.metadata_filter) do
-      _ = log_event(level, message, timestamp, metadata, state)
+      log_event(level, message, timestamp, metadata, state)
     end
 
     {:ok, state}
   end
 
-  def handle_event(_, state) do
+  def handle_event(_event, state) do
     {:ok, state}
   end
 
@@ -57,8 +49,6 @@ defmodule LoggerTelegramBackend do
     {:ok, state}
   end
 
-  ## Private
-
   defp meet_level?(_lvl, nil), do: true
   defp meet_level?(:warn, min), do: meet_level?(:warning, min)
   defp meet_level?(lvl, min), do: Logger.compare_levels(lvl, min) != :lt
@@ -66,35 +56,30 @@ defmodule LoggerTelegramBackend do
   defp metadata_matches?(_metadata, nil), do: true
   defp metadata_matches?(_metadata, []), do: true
 
-  defp metadata_matches?(metadata, [{k, v} | rest]) do
-    case Keyword.fetch(metadata, k) do
-      {:ok, ^v} -> metadata_matches?(metadata, rest)
+  defp metadata_matches?(metadata, [{key, value} | rest]) do
+    case Keyword.fetch(metadata, key) do
+      {:ok, ^value} -> metadata_matches?(metadata, rest)
       _ -> false
     end
   end
 
   defp configure(options, %State{} = state) do
-    config = Keyword.merge(Application.get_env(:logger, :telegram), options)
-    Application.put_env(:logger, :telegram, config)
+    config = Keyword.merge(Application.get_env(:logger, __MODULE__), options)
+    Application.put_env(:logger, __MODULE__, config)
     initialize(config, state)
   end
 
   defp initialize(config, %State{} = state) do
     metadata = config[:metadata] || @default_metadata
     {sender, sender_opts} = config[:sender] || @default_sender
-
     sender_opts = Keyword.take(config, sender_opts)
-    client_opts = Keyword.take(config, [:base_url, :adapter])
-
-    client = sender.client(client_opts)
-    send_message = &sender.send_message(client, &1, sender_opts)
 
     %State{
       state
       | level: config[:level],
         metadata: configure_metadata(metadata),
         metadata_filter: config[:metadata_filter],
-        send_message: send_message
+        send_message: &sender.send_message(&1, sender_opts)
     }
   end
 

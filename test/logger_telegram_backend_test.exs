@@ -1,5 +1,5 @@
 defmodule LoggerTelegramBackendTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case
 
   require Logger
 
@@ -7,19 +7,22 @@ defmodule LoggerTelegramBackendTest do
     @behaviour LoggerTelegramBackend.Sender
 
     @impl true
-    def client(_opts) do
-      Tesla.client([])
-    end
-
-    @impl true
-    def send_message(_client, text, _opts) do
-      send(:logger_telegram_backend_test, {:text, text})
+    def send_message(text, opts) do
+      send(:logger_telegram_backend_test, {:send_message, text, opts})
       :ok
     end
   end
 
   setup_all do
-    :ok = LoggerBackends.configure(truncate: :infinity)
+    Application.put_env(:logger, :default_handler, false)
+    Logger.App.stop()
+    Application.start(:logger)
+
+    on_exit(fn ->
+      Application.delete_env(:logger, :default_handler)
+      Logger.App.stop()
+      Application.start(:logger)
+    end)
   end
 
   setup ctx do
@@ -29,11 +32,16 @@ defmodule LoggerTelegramBackendTest do
       |> Map.to_list()
       |> Keyword.merge(sender: {TestSender, []})
 
-    Application.put_env(:logger, :telegram, opts)
-    Process.register(self(), :logger_telegram_backend_test)
-
-    LoggerBackends.remove(LoggerTelegramBackend)
+    Application.put_env(:logger, LoggerTelegramBackend, opts)
     {:ok, _} = LoggerBackends.add(LoggerTelegramBackend)
+    :ok = LoggerBackends.configure(truncate: :infinity)
+
+    on_exit(fn ->
+      LoggerBackends.remove(LoggerTelegramBackend)
+      Application.delete_env(:logger, LoggerTelegramBackend)
+    end)
+
+    Process.register(self(), :logger_telegram_backend_test)
 
     :ok
   end
@@ -41,29 +49,45 @@ defmodule LoggerTelegramBackendTest do
   test "logs the message to the specified sender" do
     Logger.info("foo")
 
-    assert_receive {:text, "<b>[info]</b> <b>foo</b>" <> _rest}
+    assert_receive {:send_message, "<b>[info]</b> <b>foo</b>" <> _rest, []}
+  end
+
+  @tag level: :error
+  test "can be configured at runtime" do
+    LoggerBackends.configure(LoggerTelegramBackend,
+      level: :debug,
+      metadata: [:user],
+      chat_id: "$chat_id",
+      token: "$token",
+      sender: {TestSender, [:chat_id, :token]}
+    )
+
+    Logger.debug("foo", user: 1)
+
+    assert_receive {:send_message, "<b>[debug]</b> <b>foo</b>\n<pre>User: 1</pre>",
+                    [chat_id: "$chat_id", token: "$token"]}
   end
 
   test "formats the message with markdown" do
     Logger.error("foobar")
 
-    assert_receive {
-      :text,
-      "<b>[error]</b> <b>foobar</b>\n" <>
-        "<pre>" <>
-        "Line: " <>
-        <<_line::size(16)>> <>
-        "\n" <>
-        "Function: \"test formats the message with markdown/1\"\n" <>
-        "Module: LoggerTelegramBackendTest\n" <> "File:" <> _file
-    }
+    assert_receive {:send_message, message, _}
+
+    assert "<b>[error]</b> <b>foobar</b>\n" <>
+             "<pre>" <>
+             "Line: " <>
+             <<_line::size(16)>> <>
+             "\n" <>
+             "Function: \"test formats the message with markdown/1\"\n" <>
+             "Module: LoggerTelegramBackendTest\n" <> "File:" <> _file = message
   end
 
   @tag metadata: [:function, :module]
   test "shortens the message if necessary" do
-    message = List.duplicate("E", 9999) |> to_string
+    message = List.duplicate("E", 9999) |> to_string()
     Logger.info(message)
-    assert_receive {:text, log}
+
+    assert_receive {:send_message, log, _}
 
     assert log ==
              """
@@ -80,7 +104,7 @@ defmodule LoggerTelegramBackendTest do
       message = List.duplicate(grapheme, 9999) |> to_string
       Logger.info(message)
 
-      assert_receive {:text, log}
+      assert_receive {:send_message, log, _}
       assert log == "<b>[info]</b> <b>#{List.duplicate(grapheme, 4086)}...</b>\n<pre></pre>"
     end
   end
@@ -90,26 +114,27 @@ defmodule LoggerTelegramBackendTest do
     message = List.duplicate("&", 9999) |> to_string
     Logger.info(message)
 
-    assert_receive {:text, log}
+    assert_receive {:send_message, log, _}
     assert log == "<b>[info]</b> <b>#{List.duplicate("&amp;", 4086)}...</b>\n<pre></pre>"
   end
 
   @tag metadata: []
-  test "escapes special chars" do
-    Logger.info("<>&")
-    Logger.info("<code>FOO</code>")
+  test "escapes special chars in the message" do
+    Logger.info("<msg=&>")
 
-    assert_receive {:text, "<b>[info]</b> <b>&lt;&gt;&amp;</b>\n<pre></pre>"}
-    assert_receive {:text, "<b>[info]</b> <b>&lt;code&gt;FOO&lt;/code&gt;</b>\n<pre></pre>"}
+    assert_receive {:send_message, message, _}
+
+    assert message ==
+             "<b>[info]</b> <b>&lt;msg=&amp;&gt;</b>\n<pre></pre>"
   end
 
   test "logs multiple message smoothly" do
     range = 1..532
 
     for n <- range, do: Logger.info("#{n}")
-    for _ <- range, do: assert_receive({:text, _})
+    for _ <- range, do: assert_receive({:send_message, _, _})
 
-    refute_receive {:text, _}
+    refute_receive {:send_message, _, _}
   end
 
   @tag level: :error
@@ -118,7 +143,7 @@ defmodule LoggerTelegramBackendTest do
     Logger.info("info: foo")
     Logger.warning("warn: foo")
 
-    refute_receive {:text, _}
+    refute_receive {:send_message, _, _}
   end
 
   @tag metadata_filter: [foo: :bar]
@@ -126,11 +151,9 @@ defmodule LoggerTelegramBackendTest do
     Logger.debug("dbg: foo")
     Logger.warning("warn: foo", foo: :baz)
     Logger.info("info: foo", application: :app)
-
-    refute_receive {:text, _}
+    refute_receive {:send_message, _, _}
 
     Logger.info("info: success", foo: :bar)
-
-    assert_receive {:text, _}
+    assert_receive {:send_message, _, _}
   end
 end

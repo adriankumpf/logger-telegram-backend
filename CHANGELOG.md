@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.0.0-rc.1] - 2023-08-03
+
+### Changes
+
+- Add HTTP client for `Finch`
+
 ## [3.0.0-rc.0] - 2023-08-06
 
 ### Breaking Changes
@@ -190,6 +196,7 @@ config :logger, LoggerTelegramBackend,
 
 ## [1.0.0] - 2018-01-14
 
+[3.0.0-rc.1]: https://github.com/adriankumpf/logger-telegram-backend/compare/v3.0.0-rc.0...v3.0.0-rc.1
 [3.0.0-rc.0]: https://github.com/adriankumpf/logger-telegram-backend/compare/v2.0.1...v3.0.0-rc.0
 [2.0.1]: https://github.com/adriankumpf/logger-telegram-backend/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.3.0...v2.0.0

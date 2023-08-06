@@ -1,9 +1,8 @@
 defmodule LoggerTelegramBackend.Mixfile do
   use Mix.Project
 
-  @name "LoggerTelegramBackend"
   @version "3.0.0-dev"
-  @url "https://github.com/adriankumpf/logger-telegram-backend"
+  @source_url "https://github.com/adriankumpf/logger-telegram-backend"
 
   def project do
     [
@@ -13,12 +12,16 @@ defmodule LoggerTelegramBackend.Mixfile do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       package: package(),
-      aliases: [docs: &build_docs/1],
       description: "A Logger backend for Telegram",
       source_url: "https://github.com/adriankumpf/logger-telegram-backend",
       homepage_url: "https://github.com/adriankumpf/logger-telegram-backend",
-      docs: [main: "readme", extras: ["README.md"]],
-      name: @name
+      docs: [
+        extras: ["README.md", "CHANGELOG.md"],
+        source_ref: "#{@version}",
+        source_url: @source_url,
+        main: "readme",
+        skip_undefined_reference_warnings_on: ["CHANGELOG.md"]
+      ]
     ]
   end
 
@@ -31,30 +34,20 @@ defmodule LoggerTelegramBackend.Mixfile do
       {:exvcr, "~> 0.10", only: :test},
       {:tesla, "~> 1.4"},
       {:logger_backends, "~> 1.0", only: :test},
+      {:ex_doc, "~> 0.30", only: :dev, runtime: false},
       {:hackney, "~> 1.15", optional: true}
     ]
   end
 
   defp package do
     [
+      files: ["lib", "LICENSE", "mix.exs", "README.md", "CHANGELOG.md"],
+      maintainers: ["Adrian Kumpf"],
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/adriankumpf/logger-telegram-backend"},
-      maintainers: ["Adrian Kumpf"]
+      links: %{
+        "Changelog" => "#{@source_url}/blob/master/CHANGELOG.md",
+        "GitHub" => @source_url
+      }
     ]
-  end
-
-  defp build_docs(_) do
-    Mix.Task.run("compile")
-
-    ex_doc = Path.join(Mix.path_for(:escripts), "ex_doc")
-
-    unless File.exists?(ex_doc) do
-      raise "cannot build docs because escript for ex_doc is not installed"
-    end
-
-    args = [@name, @version, Mix.Project.compile_path()]
-    opts = ~w[--main #{@name} --source-ref v#{@version} --source-url #{@url}]
-    System.cmd(ex_doc, args ++ opts)
-    Mix.shell().info("Docs built successfully")
   end
 end

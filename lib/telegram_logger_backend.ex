@@ -88,10 +88,11 @@ defmodule LoggerTelegramBackend do
 
   defp log_event(level, message, _ts, metadata, %State{} = state) do
     metadata = take_metadata(metadata, state.metadata)
+    message = Formatter.format_event(message, level, metadata)
 
-    message
-    |> Formatter.format_event(level, metadata)
-    |> state.send_message.()
+    with {:error, reason} <- state.send_message.(message) do
+      IO.warn("#{__MODULE__} failed to send message: #{inspect(reason)}")
+    end
   end
 
   defp take_metadata(metadata, :all), do: metadata

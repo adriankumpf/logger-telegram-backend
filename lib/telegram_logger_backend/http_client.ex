@@ -37,11 +37,11 @@ defmodule LoggerTelegramBackend.HTTPClient do
   @type body :: binary()
 
   @doc """
-  Should return a **child specification** to start the HTTP client.
+  Should return a **child specification** to start the HTTP client or `nil`.
 
   For example, this can start a pool of HTTP connections dedicated to LoggerTelegramBackend.
   """
-  @callback child_spec() :: Supervisor.child_spec()
+  @callback child_spec() :: Supervisor.child_spec() | nil
 
   @doc """
   Should make an HTTP request to `url` with the given `method`, `headers` and `body`.

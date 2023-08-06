@@ -7,9 +7,11 @@ defmodule LoggerTelegramBackend.Application do
 
   @impl true
   def start(_type, _opts) do
-    children = [
-      Config.client().child_spec()
-    ]
+    children =
+      case Config.client().child_spec() do
+        nil -> []
+        client -> [client]
+      end
 
     Supervisor.start_link(children,
       strategy: :one_for_one,

@@ -52,8 +52,8 @@ defmodule LoggerTelegramBackend do
   @behaviour :gen_event
 
   alias LoggerTelegramBackend.Formatter
+  alias LoggerTelegramBackend.Sender
 
-  @default_sender LoggerTelegramBackend.Sender
   @default_metadata [:line, :function, :module, :application, :file]
 
   @impl :gen_event
@@ -108,21 +108,14 @@ defmodule LoggerTelegramBackend do
 
   defp initialize(config) do
     metadata = config[:metadata] || @default_metadata
-
-    sender = get_sender(config)
     sender_opts = Keyword.take(config, [:token, :chat_id, :client_request_opts])
 
     %{
       level: config[:level],
       metadata: configure_metadata(metadata),
       metadata_filter: config[:metadata_filter],
-      send_message: &sender.send_message(&1, sender_opts)
+      sender_opts: sender_opts
     }
-  end
-
-  case Mix.env() do
-    :test -> defp get_sender(opts), do: opts[:sender] || @default_sender
-    _prod -> defp get_sender(_opts), do: @default_sender
   end
 
   defp configure_metadata(:all), do: :all
@@ -132,7 +125,7 @@ defmodule LoggerTelegramBackend do
     metadata = take_metadata(metadata, state.metadata)
     message = Formatter.format_event(message, level, metadata)
 
-    with {:error, reason} <- state.send_message.(message) do
+    with {:error, reason} <- Sender.send_message(message, state.sender_opts) do
       IO.warn("#{__MODULE__} failed to send message: #{inspect(reason)}")
     end
   end

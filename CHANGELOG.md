@@ -1,48 +1,32 @@
 # Changelog
 
-## [3.0.0-rc.1] - 2023-08-07
-
-### Changes
-
-- Add HTTP client for `Finch`
-
-## [3.0.0-rc.0] - 2023-08-06
-
-### Breaking Changes
-
-- Allow to customize the HTTP client
-- Remove `:proxy` option
-
-### Changes
-
-- Log a warning if sending fails
-
-### Bug fixes
-
-- Escape metadata fields
-- Fix deprecation warnings
+## 3.0.0 - unreleased
 
 ### Upgrade Instructions
 
-#### Migrate to `:logger_backends`
+#### Dependencies
 
-If you are using Elixir 1.15, add `:logger_telegram_backend` to your list of dependencies in `mix.exs`:
+LoggerTelegramBackend now ships with an HTTP client based on `:finch` instead of `:hackney`.
+
+Add `:finch` to your list of dependencies in `mix.exs`:
 
 ```elixir
-  def deps do
-    [
-      {:logger_telegram_backend, "~> 3.0-rc"},
-      {:logger_backends, "~> 1.0"}
-    ]
-  end
+def deps do
+  [
+    {:logger_telegram_backend, "~> 3.0-rc"},
+    {:finch, "~> 0.16"},
+  ]
+end
 ```
+
+#### Adding the backend
 
 In your `Application.start/2` callback, add the `LoggerTelegramBackend` backend:
 
 ```elixir
 @impl true
 def start(_type, _args) do
-  LoggerBackends.add(LoggerTelegramBackend)
+  LoggerTelegramBackend.attach()
 
   # ...
 end
@@ -103,16 +87,43 @@ config :logger, LoggerTelegramBackend,
   proxy: "socks5://127.0.0.1:9050"
 ```
 
-And add the following `:hackney_opts`:
+And add the following `:client_pool_opts`:
 
 ```elixir
 config :logger, LoggerTelegramBackend,
-  hackney_opts: [
-    ssl: [verify: :verify_none],
-    hackney: [insecure: true],
-    proxy: {:socks5, ~c"127.0.0.1", 9050}
-  ]
+  client_pool_opts: [conn_opts: [{:http, "127.0.0.1", 9050, []}]]
 ```
+
+## [3.0.0-rc.2] - 2023-08-07
+
+- Remove hackney client
+- Pass client opts to callback implementations
+- Set user agent
+- Wrap LoggerBackends functions
+- Run tests on Elixir 1.10 / OTP 21
+
+## [3.0.0-rc.1] - 2023-08-07
+
+### Changes
+
+- Add HTTP client for `Finch`
+
+## [3.0.0-rc.0] - 2023-08-06
+
+### Breaking Changes
+
+- Allow to customize the HTTP client
+- Remove `:proxy` option
+
+### Changes
+
+- Log a warning if sending fails
+
+### Bug fixes
+
+- Escape metadata fields
+- Fix deprecation warnings
+
 
 ## [2.0.1] - 2021-05-02
 
@@ -196,6 +207,7 @@ config :logger, LoggerTelegramBackend,
 
 ## [1.0.0] - 2018-01-14
 
+[3.0.0-rc.2]: https://github.com/adriankumpf/logger-telegram-backend/compare/v3.0.0-rc.1...v3.0.0-rc.2
 [3.0.0-rc.1]: https://github.com/adriankumpf/logger-telegram-backend/compare/v3.0.0-rc.0...v3.0.0-rc.1
 [3.0.0-rc.0]: https://github.com/adriankumpf/logger-telegram-backend/compare/v2.0.1...v3.0.0-rc.0
 [2.0.1]: https://github.com/adriankumpf/logger-telegram-backend/compare/v2.0.0...v2.0.1

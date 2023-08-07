@@ -1,6 +1,8 @@
-defmodule LoggerTelegramBackend.Sender.TelegramTest do
-  use ExUnit.Case, async: false
+defmodule LoggerTelegramBackend.SenderTest do
+  use ExUnit.Case, async: true
   use ExVCR.Mock, adapter: ExVCR.Adapter.Finch
+
+  alias LoggerTelegramBackend.Sender
 
   setup do
     ExVCR.Config.cassette_library_dir("test/fixture/vcr_cassettes")
@@ -14,11 +16,7 @@ defmodule LoggerTelegramBackend.Sender.TelegramTest do
 
   test "send_message" do
     use_cassette "send_message" do
-      assert :ok =
-               LoggerTelegramBackend.Sender.Telegram.send_message("tach",
-                 token: "$token",
-                 chat_id: "$chatId"
-               )
+      assert :ok = Sender.send_message("tach", token: "$token", chat_id: "$chatId")
     end
   end
 end

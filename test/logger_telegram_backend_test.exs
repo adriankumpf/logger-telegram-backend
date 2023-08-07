@@ -1,95 +1,168 @@
 defmodule LoggerTelegramBackendTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: false
 
   require Logger
+  import ExUnit.CaptureIO
 
-  defmodule TestSender do
-    @behaviour LoggerTelegramBackend.Sender
+  defmodule TestClient do
+    @behaviour LoggerTelegramBackend.HTTPClient
 
     @impl true
-    def send_message(text, opts) do
-      send(:logger_telegram_backend_test, {:send_message, text, opts})
-      :ok
+    def child_spec(pool_opts) do
+      send(:logger_telegram_backend_test, {:child_spec, pool_opts})
+      Finch.child_spec(name: __MODULE__)
+    end
+
+    @impl true
+    def request(_method, _url, _headers, body, opts) do
+      decoded_body = URI.decode_query(body)
+      send(:logger_telegram_backend_test, {:request, decoded_body, opts})
+      {:ok, 200, [], []}
     end
   end
 
-  setup_all do
-    Application.put_env(:logger, :default_handler, false)
-    Logger.App.stop()
-    Application.start(:logger)
+  defmodule NoChildSpecTestClient do
+    @behaviour LoggerTelegramBackend.HTTPClient
 
-    on_exit(fn ->
-      Application.delete_env(:logger, :default_handler)
-      Logger.App.stop()
-      Application.start(:logger)
-    end)
+    @impl true
+    def child_spec(_pool_opts), do: nil
+
+    @impl true
+    def request(_method, _url, _headers, _body, _opts), do: raise("unimplemented")
   end
 
-  setup ctx do
-    opts =
-      ctx
-      |> Map.take([:metadata, :metadata_filter, :level])
-      |> Map.to_list()
-      |> Keyword.merge(sender: {TestSender, []})
+  setup_all do
+    Application.stop(:logger_telegram_backend)
 
-    Application.put_env(:logger, LoggerTelegramBackend, opts)
+    on_exit(fn ->
+      Application.start(:logger_telegram_backend)
+    end)
+
+    :ok
+  end
+
+  @default_config [client: TestClient, chat_id: "$chat_id", token: "$token"]
+
+  setup ctx do
+    config =
+      ctx[:config!] ||
+        ctx
+        |> Map.get(:config, [])
+        |> then(&Keyword.merge(@default_config, &1))
+
+    application_child_spec = %{
+      id: __MODULE__,
+      start: {LoggerTelegramBackend.Application, :start, [nil, []]},
+      type: :supervisor
+    }
+
+    Process.register(self(), :logger_telegram_backend_test)
+    Application.put_env(:logger, LoggerTelegramBackend, config)
+    start_link_supervised!(application_child_spec)
     {:ok, _} = LoggerBackends.add(LoggerTelegramBackend)
-    :ok = LoggerBackends.configure(truncate: :infinity)
+    LoggerBackends.configure(truncate: :infinity)
 
     on_exit(fn ->
       LoggerBackends.remove(LoggerTelegramBackend)
       Application.delete_env(:logger, LoggerTelegramBackend)
     end)
 
-    Process.register(self(), :logger_telegram_backend_test)
-
     :ok
+  end
+
+  @tag config: [
+         client: TestClient,
+         client_pool_opts: [conn_opts: [{:http, "127.0.0.1", 8888, []}]]
+       ]
+  test "passes the :client_pool_opts to child_spec/1" do
+    assert_receive {:child_spec, [conn_opts: [{:http, "127.0.0.1", 8888, []}]]}
+  end
+
+  @tag config: [
+         client: NoChildSpecTestClient
+       ]
+  test "allows to return nil from child_spec/1" do
+    refute_receive _
+  end
+
+  @tag config: [
+         chat_id: "$chat_id",
+         token: "$token",
+         client: TestClient,
+         client_request_opts: [receive_timeout: 5_000]
+       ]
+  test "passes the :client_request_opts to request/5" do
+    Logger.info("foo")
+
+    assert_receive {:request, _body, [receive_timeout: 5000]}
+  end
+
+  @tag config!: [token: "$token", client: TestClient]
+  test "fails if :chat_id is missing" do
+    error =
+      capture_io(:stderr, fn ->
+        Logger.info("foo")
+        refute_receive {:request, _body, _opts}
+      end)
+
+    assert error =~ ":gen_event handler LoggerTelegramBackend installed in Logger terminating"
+    assert error =~ ":chat_id is required"
+  end
+
+  @tag config!: [chat_id: "$chat_id", client: TestClient]
+  test "fails if :token is missing" do
+    error =
+      capture_io(:stderr, fn ->
+        Logger.info("foo")
+        refute_receive {:request, _body, _opts}
+      end)
+
+    assert error =~ ":gen_event handler LoggerTelegramBackend installed in Logger terminating"
+    assert error =~ ":token is required"
   end
 
   test "logs the message to the specified sender" do
     Logger.info("foo")
 
-    assert_receive {:send_message, "<b>[info]</b> <b>foo</b>" <> _rest, []}
+    assert_receive {:request, %{"text" => "<b>[info]</b> <b>foo</b>" <> _rest}, []}
   end
 
-  @tag level: :error
+  @tag config: [level: :error]
   test "can be configured at runtime" do
     LoggerBackends.configure(LoggerTelegramBackend,
       level: :debug,
       metadata: [:user],
       chat_id: "$chat_id",
-      token: "$token",
-      sender: {TestSender, [:chat_id, :token]}
+      token: "$token"
     )
 
     Logger.debug("foo", user: 1)
 
-    assert_receive {:send_message, "<b>[debug]</b> <b>foo</b>\n<pre>User: 1</pre>",
-                    [chat_id: "$chat_id", token: "$token"]}
+    assert_receive {:request, %{"text" => "<b>[debug]</b> <b>foo</b>\n<pre>User: 1</pre>"}, _opts}
   end
 
   test "formats the message with markdown" do
     Logger.error("foobar")
 
-    assert_receive {:send_message, message, _}
+    assert_receive {:request, %{"text" => text}, _opts}
 
     assert "<b>[error]</b> <b>foobar</b>\n" <>
              "<pre>" <>
              "Line: " <>
-             <<_line::size(16)>> <>
+             <<_line::size(24)>> <>
              "\n" <>
              "Function: \"test formats the message with markdown/1\"\n" <>
-             "Module: LoggerTelegramBackendTest\n" <> "File:" <> _file = message
+             "Module: LoggerTelegramBackendTest\n" <> "File:" <> _file = text
   end
 
-  @tag metadata: [:function, :module]
+  @tag config: [metadata: [:function, :module]]
   test "shortens the message if necessary" do
     message = List.duplicate("E", 9999) |> to_string()
     Logger.info(message)
 
-    assert_receive {:send_message, log, _}
+    assert_receive {:request, %{"text" => text}, _opts}
 
-    assert log ==
+    assert text ==
              """
              <b>[info]</b> <b>#{List.duplicate("E", 4000)}...</b>
              <pre>Function: \"test shortens the message if necessary/1\"
@@ -98,33 +171,33 @@ defmodule LoggerTelegramBackendTest do
              |> String.trim_trailing()
   end
 
-  @tag metadata: []
+  @tag config: [metadata: []]
   test "shortens the message based on its graphemes not bytes" do
     for grapheme <- ["A", "é", "💜"] do
       message = List.duplicate(grapheme, 9999) |> to_string
       Logger.info(message)
 
-      assert_receive {:send_message, log, _}
-      assert log == "<b>[info]</b> <b>#{List.duplicate(grapheme, 4086)}...</b>\n<pre></pre>"
+      assert_receive {:request, %{"text" => text}, _opts}
+      assert text == "<b>[info]</b> <b>#{List.duplicate(grapheme, 4086)}...</b>\n<pre></pre>"
     end
   end
 
-  @tag metadata: []
+  @tag config: [metadata: []]
   test "shortens the message and escapes special chars afterwards" do
     message = List.duplicate("&", 9999) |> to_string
     Logger.info(message)
 
-    assert_receive {:send_message, log, _}
-    assert log == "<b>[info]</b> <b>#{List.duplicate("&amp;", 4086)}...</b>\n<pre></pre>"
+    assert_receive {:request, %{"text" => text}, _opts}
+    assert text == "<b>[info]</b> <b>#{List.duplicate("&amp;", 4086)}...</b>\n<pre></pre>"
   end
 
-  @tag metadata: [:unsafe]
+  @tag config: [metadata: [:unsafe]]
   test "escapes special chars in the message and metadata" do
     Logger.info("<msg=&>", unsafe: "<metadata=&>")
 
-    assert_receive {:send_message, message, _}
+    assert_receive {:request, %{"text" => text}, _opts}
 
-    assert message ==
+    assert text ==
              "<b>[info]</b> <b>&lt;msg=&amp;&gt;</b>\n<pre>Unsafe: \"&lt;metadata=&amp;&gt;\"</pre>"
   end
 
@@ -132,28 +205,28 @@ defmodule LoggerTelegramBackendTest do
     range = 1..532
 
     for n <- range, do: Logger.info("#{n}")
-    for _ <- range, do: assert_receive({:send_message, _, _})
+    for _ <- range, do: assert_receive({:request, _body, _opts})
 
-    refute_receive {:send_message, _, _}
+    refute_receive {:request, _body, _opts}
   end
 
-  @tag level: :error
+  @tag config: [level: :error]
   test "ignores the message if its level is lower than the configured one" do
     Logger.debug("dbg: foo")
     Logger.info("info: foo")
     Logger.warning("warn: foo")
 
-    refute_receive {:send_message, _, _}
+    refute_receive {:request, _body, _opts}
   end
 
-  @tag metadata_filter: [foo: :bar]
+  @tag config: [metadata_filter: [foo: :bar]]
   test "ignores the message if the metadata_filter does not match" do
     Logger.debug("dbg: foo")
     Logger.warning("warn: foo", foo: :baz)
     Logger.info("info: foo", application: :app)
-    refute_receive {:send_message, _, _}
+    refute_receive {:request, _, _}
 
     Logger.info("info: success", foo: :bar)
-    assert_receive {:send_message, _, _}
+    assert_receive {:request, _, _}
   end
 end

@@ -8,6 +8,7 @@ defmodule LoggerTelegramBackend.Application do
   @impl true
   def start(_type, _opts) do
     client = Config.client()
+    pool_opts = Config.client_pool_opts()
 
     if client == LoggerTelegramBackend.HTTPClient.Finch do
       unless Code.ensure_loaded?(Finch) do
@@ -23,7 +24,7 @@ defmodule LoggerTelegramBackend.Application do
     end
 
     children =
-      case client.child_spec() do
+      case client.child_spec(pool_opts) do
         nil -> []
         client -> [client]
       end

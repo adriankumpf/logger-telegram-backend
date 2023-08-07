@@ -11,9 +11,9 @@ defmodule LoggerTelegramBackend do
     defstruct [:level, :metadata, :metadata_filter, :send_message]
   end
 
-  alias LoggerTelegramBackend.{Formatter, Sender}
+  alias LoggerTelegramBackend.Formatter
 
-  @default_sender {Sender.Telegram, [:token, :chat_id]}
+  @default_sender LoggerTelegramBackend.Sender
   @default_metadata [:line, :function, :module, :application, :file]
 
   @impl :gen_event
@@ -71,8 +71,9 @@ defmodule LoggerTelegramBackend do
 
   defp initialize(config, %State{} = state) do
     metadata = config[:metadata] || @default_metadata
-    {sender, sender_opts} = config[:sender] || @default_sender
-    sender_opts = Keyword.take(config, sender_opts)
+
+    sender = get_sender(config)
+    sender_opts = Keyword.take(config, [:token, :chat_id, :client_request_opts])
 
     %State{
       state
@@ -81,6 +82,11 @@ defmodule LoggerTelegramBackend do
         metadata_filter: config[:metadata_filter],
         send_message: &sender.send_message(&1, sender_opts)
     }
+  end
+
+  case Mix.env() do
+    :test -> defp get_sender(opts), do: opts[:sender] || @default_sender
+    _prod -> defp get_sender(_opts), do: @default_sender
   end
 
   defp configure_metadata(:all), do: :all

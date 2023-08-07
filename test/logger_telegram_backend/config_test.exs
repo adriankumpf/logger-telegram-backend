@@ -27,11 +27,4 @@ defmodule LoggerTelegramBackend.ConfigTest do
       assert Config.client_pool_opts() == [foo: :bar]
     end
   end
-
-  describe "client_request_opts/0" do
-    test "read the application config" do
-      Application.put_env(:logger, LoggerTelegramBackend, client_request_opts: [foo: :bar])
-      assert Config.client_request_opts() == [foo: :bar]
-    end
-  end
 end

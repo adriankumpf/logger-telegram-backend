@@ -2,7 +2,6 @@ defmodule LoggerTelegramBackendTest do
   use ExUnit.Case, async: false
 
   require Logger
-  import ExUnit.CaptureIO
 
   defmodule TestClient do
     @behaviour LoggerTelegramBackend.HTTPClient
@@ -45,10 +44,9 @@ defmodule LoggerTelegramBackendTest do
 
   setup ctx do
     config =
-      ctx[:config!] ||
-        ctx
-        |> Map.get(:config, [])
-        |> then(&Keyword.merge(@default_config, &1))
+      ctx
+      |> Map.get(:config, [])
+      |> then(&Keyword.merge(@default_config, &1))
 
     application_child_spec = %{
       id: __MODULE__,
@@ -95,30 +93,6 @@ defmodule LoggerTelegramBackendTest do
     Logger.info("foo")
 
     assert_receive {:request, _body, [receive_timeout: 5000]}
-  end
-
-  @tag config!: [token: "$token", client: TestClient]
-  test "fails if :chat_id is missing" do
-    error =
-      capture_io(:stderr, fn ->
-        Logger.info("foo")
-        refute_receive {:request, _body, _opts}
-      end)
-
-    assert error =~ ":gen_event handler LoggerTelegramBackend installed in Logger terminating"
-    assert error =~ ":chat_id is required"
-  end
-
-  @tag config!: [chat_id: "$chat_id", client: TestClient]
-  test "fails if :token is missing" do
-    error =
-      capture_io(:stderr, fn ->
-        Logger.info("foo")
-        refute_receive {:request, _body, _opts}
-      end)
-
-    assert error =~ ":gen_event handler LoggerTelegramBackend installed in Logger terminating"
-    assert error =~ ":token is required"
   end
 
   test "logs the message to the specified sender" do

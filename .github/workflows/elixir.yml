@@ -35,29 +35,18 @@ jobs:
           elixir-version: ${{matrix.pair.elixir}}
           version-type: "strict"
 
-      - name: Cache deps
-        id: cache-deps
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-elixir-deps
-        with:
-          path: deps
-          key: ${{ runner.os }}-mix-${{ env.cache-name }}-${{ hashFiles('**/mix.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-mix-${{ env.cache-name }}-
-
-      - name: Cache compiled build
+      - name: Cache compiled build and deps
         id: cache-build
         uses: actions/cache@v3
         env:
-          cache-name: cache-compiled-build
+          cache-name: cache-compiled-build-and-deps
         with:
-          path: _build
+          path: |
+            _build
+            deps
           key: ${{ runner.os }}-mix-${{ env.cache-name }}-${{ matrix.pair.elixir }}-${{ matrix.pair.otp }}-${{ hashFiles('**/mix.lock') }}
           restore-keys: |
             ${{ runner.os }}-mix-${{ env.cache-name }}-${{ matrix.pair.elixir }}-${{ matrix.pair.otp }}-
-            ${{ runner.os }}-mix-${{ env.cache-name }}-
-            ${{ runner.os }}-mix-
 
       - name: Install Dependencies
         run: mix deps.get

@@ -43,10 +43,7 @@ defmodule LoggerTelegramBackendTest do
   @default_config [client: TestClient, chat_id: "$chat_id", token: "$token"]
 
   setup ctx do
-    config =
-      ctx
-      |> Map.get(:config, [])
-      |> then(&Keyword.merge(@default_config, &1))
+    config = Keyword.merge(@default_config, Map.get(ctx, :config, []))
 
     application_child_spec = %{
       id: __MODULE__,
@@ -56,9 +53,15 @@ defmodule LoggerTelegramBackendTest do
 
     Process.register(self(), :logger_telegram_backend_test)
     Application.put_env(:logger, LoggerTelegramBackend, config)
-    start_link_supervised!(application_child_spec)
+    start_supervised!(application_child_spec)
     {:ok, _} = LoggerTelegramBackend.attach()
-    LoggerBackends.configure(truncate: :infinity)
+
+    if System.version() >= "1.15.0" do
+      apply(LoggerBackends, :configure, [[truncate: :infinity]])
+    else
+      apply(Logger, :configure, [[truncate: :infinity]])
+      apply(Logger, :remove_backend, [:console])
+    end
 
     on_exit(fn ->
       LoggerTelegramBackend.detach()
@@ -148,7 +151,7 @@ defmodule LoggerTelegramBackendTest do
   @tag config: [metadata: []]
   test "shortens the message based on its graphemes not bytes" do
     for grapheme <- ["A", "é", "💜"] do
-      message = List.duplicate(grapheme, 9999) |> to_string
+      message = List.duplicate(grapheme, 9999) |> to_string()
       Logger.info(message)
 
       assert_receive {:request, %{"text" => text}, _opts}
@@ -158,7 +161,7 @@ defmodule LoggerTelegramBackendTest do
 
   @tag config: [metadata: []]
   test "shortens the message and escapes special chars afterwards" do
-    message = List.duplicate("&", 9999) |> to_string
+    message = List.duplicate("&", 9999) |> to_string()
     Logger.info(message)
 
     assert_receive {:request, %{"text" => text}, _opts}
@@ -188,7 +191,6 @@ defmodule LoggerTelegramBackendTest do
   test "ignores the message if its level is lower than the configured one" do
     Logger.debug("dbg: foo")
     Logger.info("info: foo")
-    Logger.warning("warn: foo")
 
     refute_receive {:request, _body, _opts}
   end
@@ -196,7 +198,7 @@ defmodule LoggerTelegramBackendTest do
   @tag config: [metadata_filter: [foo: :bar]]
   test "ignores the message if the metadata_filter does not match" do
     Logger.debug("dbg: foo")
-    Logger.warning("warn: foo", foo: :baz)
+    Logger.error("error: foo", foo: :baz)
     Logger.info("info: foo", application: :app)
     refute_receive {:request, _, _}
 

@@ -1,8 +1,8 @@
 defmodule LoggerTelegramBackend.HTTPClient.Finch do
   @moduledoc """
-  The built-in HTTP client based on [finch](https://github.com/sneako/finch).
+  The built-in HTTP client, based on [finch](https://github.com/sneako/finch).
 
-  This client implements the `LoggerTelegramBackend.HTTPClient` behaviour.
+  It client implements the `LoggerTelegramBackend.HTTPClient` behaviour.
 
   See `LoggerTelegramBackend` for the available configuration options and
   `LoggerTelegramBackend.HTTPClient` if you wish to use another HTTP client.
@@ -15,8 +15,7 @@ defmodule LoggerTelegramBackend.HTTPClient.Finch do
 
   @impl true
   def child_spec do
-    opts = Config.client_pool_opts() |> Keyword.put(:name, @finch_pool_name)
-    Finch.child_spec(opts)
+    Finch.child_spec(name: @finch_pool_name, pools: %{default: Config.client_pool_opts()})
   end
 
   @impl true

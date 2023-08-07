@@ -11,9 +11,8 @@ defmodule LoggerTelegramBackend.ConfigTest do
   end
 
   describe "client/0" do
-    test "selects finch over hackney" do
+    test "defaults to finch" do
       assert Config.client() == HTTPClient.Finch
-      assert Application.get_env(:logger, LoggerTelegramBackend)[:client] == HTTPClient.Finch
     end
 
     test "read the application config" do

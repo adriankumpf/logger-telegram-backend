@@ -7,8 +7,23 @@ defmodule LoggerTelegramBackend.Application do
 
   @impl true
   def start(_type, _opts) do
+    client = Config.client()
+
+    if client == LoggerTelegramBackend.HTTPClient.Finch do
+      unless Code.ensure_loaded?(Finch) do
+        raise """
+        LoggerTelegramBackend failed to start. Add :finch to your dependencies to fix this, or \
+        configure a different HTTP client.
+        """
+      end
+
+      with {:error, reason} <- Application.ensure_all_started(:finch) do
+        raise "failed to start the :finch application: #{inspect(reason)}"
+      end
+    end
+
     children =
-      case Config.client().child_spec() do
+      case client.child_spec() do
         nil -> []
         client -> [client]
       end

@@ -17,7 +17,7 @@ def deps do
   [
     {:logger_telegram_backend, "~> 3.0-rc"},
     {:logger_backends, "~> 1.0"},
-    {:finch, "~> 1.18"},
+    {:finch, "~> 0.16"},
   ]
 end
 ```
@@ -64,20 +64,17 @@ The available options are:
 
 - `:client` - If you need different functionality for the HTTP client, you can define your own module that implements the `LoggerTelegramBackend.HTTPClient` behaviour and set `client` to that module.
 
-  By default, selects the first client in the list whose application is loaded:
-
-  - `LoggerTelegramBackend.HTTPClient.Finch` (requires `:finch`)
-  - `LoggerTelegramBackend.HTTPClient.Hackney` (requires`:hackney`)
+  Default: `LoggerTelegramBackend.HTTPClient.Finch` (requires `:finch`)
 
 - `:client_pool_opts` - The options passed to configure the pool.
 
-  See [Finch](https://hexdocs.pm/finch/Finch.html#start_link/1) or [Hackney](https://hexdocs.pm/hackney/).
+  See [Finch.start_link/1](https://hexdocs.pm/finch/Finch.html#start_link/1).
 
   Default: `[]`
 
 - `:client_request_opts` - The options passed on every request.
 
-  See [Finch](https://hexdocs.pm/finch/Finch.html#request/3) or [Hackney](https://hexdocs.pm/hackney/).
+  See [Finch.request/3](https://hexdocs.pm/finch/Finch.html#request/3).
 
   Default: `[]`
 
@@ -94,6 +91,33 @@ The available options are:
      # ...
    ```
 
+##### Hackney Client
+
+A client based on `:hackney` could look like this:
+
+```elixir
+defmodule HackneyClient do
+  @behaviour LoggerTelegramBackend.HTTPClient
+
+  @hackney_pool_name :logger_telegram_backend_pool
+
+  @impl true
+  def child_spec do
+    :hackney_pool.child_spec(@hackney_pool_name, opts)
+  end
+
+  @impl true
+  def request(method, url, headers, body) do
+    opts = [{:pool, @hackney_pool_name} :with_body]
+
+    case :hackney.request(method, url, headers, body, opts) do
+      {:ok, _status, _headers, _body} = result -> result
+      {:error, _reason} = error -> error
+    end
+  end
+end
+```
+
 #### Metadata filter
 
 ```elixir
@@ -105,16 +129,13 @@ config :logger, LoggerTelegramBackend,
   metadata_filter: [application: :ui]
 ```
 
-#### SOCKS5 proxy
+#### HTTP proxy
 
 ```elixir
 config :logger, LoggerTelegramBackend,
   chat_id: "$chatId",
   token: "$botToken",
-  client: LoggerTelegramBackend.HTTPClient.Hackney,
-  client_request_opts: [
-    proxy: {:socks5, ~c"127.0.0.1", 9050}
-  ]
+  client_pool_opts: [conn_opts: [{:http, "127.0.0.1", 8888, []}]]
 ```
 
-See the [hackney docs](https://github.com/benoitc/hackney#proxy-a-connection) for further information.
+See the [Pool Configuration Options](https://hexdocs.pm/finch/Finch.html#start_link/1-pool-configuration-options) for further information.

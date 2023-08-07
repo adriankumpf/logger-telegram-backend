@@ -10,13 +10,12 @@ A logger backend for [Telegram](https://telegram.org/).
 
 ## Installation
 
-Add `:logger_telegram_backend`, `:logger_backends` and `:finch` to your list of dependencies in `mix.exs`:
+Add `:logger_telegram_backend` and `:finch` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
     {:logger_telegram_backend, "~> 3.0-rc"},
-    {:logger_backends, "~> 1.0"},
     {:finch, "~> 0.16"},
   ]
 end
@@ -27,7 +26,7 @@ In your `Application.start/2` callback, add the `LoggerTelegramBackend` backend:
 ```elixir
 @impl true
 def start(_type, _args) do
-  LoggerBackends.add(LoggerTelegramBackend)
+  LoggerTelegramBackend)
 
   # ...
 end

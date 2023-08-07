@@ -57,11 +57,11 @@ defmodule LoggerTelegramBackendTest do
     Process.register(self(), :logger_telegram_backend_test)
     Application.put_env(:logger, LoggerTelegramBackend, config)
     start_link_supervised!(application_child_spec)
-    {:ok, _} = LoggerBackends.add(LoggerTelegramBackend)
+    {:ok, _} = LoggerTelegramBackend.attach()
     LoggerBackends.configure(truncate: :infinity)
 
     on_exit(fn ->
-      LoggerBackends.remove(LoggerTelegramBackend)
+      LoggerTelegramBackend.detach()
       Application.delete_env(:logger, LoggerTelegramBackend)
     end)
 
@@ -103,7 +103,7 @@ defmodule LoggerTelegramBackendTest do
 
   @tag config: [level: :error]
   test "can be configured at runtime" do
-    LoggerBackends.configure(LoggerTelegramBackend,
+    LoggerTelegramBackend.configure(
       level: :debug,
       metadata: [:user],
       chat_id: "$chat_id",

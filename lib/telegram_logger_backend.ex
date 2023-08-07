@@ -4,12 +4,52 @@ defmodule LoggerTelegramBackend do
              |> String.split("<!-- MDOC !-->")
              |> Enum.fetch!(1)
 
-  @behaviour :gen_event
+  @doc """
+  Adds the LoggerTelegramBackend backend.
 
-  defmodule State do
-    @moduledoc false
-    defstruct [:level, :metadata, :metadata_filter, :send_message]
+  ## Options
+
+    * `:flush` - when `true`, guarantees all messages currently sent
+      to `Logger` are processed before the backend is added
+
+  """
+  @spec attach(keyword) :: Supervisor.on_start_child()
+  def attach(opts \\ [])
+
+  case System.version() >= "1.15.0" do
+    true -> def attach(opts), do: LoggerBackends.add(__MODULE__, opts)
+    false -> def attach(opts), do: Logger.add_backend(__MODULE__, opts)
   end
+
+  @doc """
+  Removes the LoggerTelegramBackend backend.
+
+  ## Options
+
+    * `:flush` - when `true`, guarantees all messages currently sent
+      to `Logger` are processed before the backend is removed
+
+  """
+  @spec detach(keyword) :: :ok | {:error, term}
+  def detach(opts \\ [])
+
+  case System.version() >= "1.15.0" do
+    true -> def detach(opts), do: LoggerBackends.remove(__MODULE__, opts)
+    false -> def detach(opts), do: Logger.remove_backend(__MODULE__, opts)
+  end
+
+  @doc """
+  Applies runtime configuration.
+
+  See the module doc for more information.
+  """
+  @spec configure(keyword) :: term
+  case System.version() >= "1.15.0" do
+    true -> def configure(opts), do: LoggerBackends.configure(__MODULE__, opts)
+    false -> def configure(opts), do: Logger.configure_backend(__MODULE__, opts)
+  end
+
+  @behaviour :gen_event
 
   alias LoggerTelegramBackend.Formatter
 
@@ -19,12 +59,15 @@ defmodule LoggerTelegramBackend do
   @impl :gen_event
   def init(__MODULE__) do
     config = Application.get_env(:logger, __MODULE__, [])
-    {:ok, initialize(config, %State{})}
+    {:ok, initialize(config)}
   end
 
   @impl :gen_event
-  def handle_call({:configure, options}, state) do
-    {:ok, :ok, configure(options, state)}
+  def handle_call({:configure, config}, _state) do
+    config = Keyword.merge(Application.get_env(:logger, __MODULE__), config)
+    :ok = Application.put_env(:logger, __MODULE__, config)
+    state = initialize(config)
+    {:ok, :ok, state}
   end
 
   @impl :gen_event
@@ -63,24 +106,17 @@ defmodule LoggerTelegramBackend do
     end
   end
 
-  defp configure(options, %State{} = state) do
-    config = Keyword.merge(Application.get_env(:logger, __MODULE__), options)
-    Application.put_env(:logger, __MODULE__, config)
-    initialize(config, state)
-  end
-
-  defp initialize(config, %State{} = state) do
+  defp initialize(config) do
     metadata = config[:metadata] || @default_metadata
 
     sender = get_sender(config)
     sender_opts = Keyword.take(config, [:token, :chat_id, :client_request_opts])
 
-    %State{
-      state
-      | level: config[:level],
-        metadata: configure_metadata(metadata),
-        metadata_filter: config[:metadata_filter],
-        send_message: &sender.send_message(&1, sender_opts)
+    %{
+      level: config[:level],
+      metadata: configure_metadata(metadata),
+      metadata_filter: config[:metadata_filter],
+      send_message: &sender.send_message(&1, sender_opts)
     }
   end
 
@@ -92,7 +128,7 @@ defmodule LoggerTelegramBackend do
   defp configure_metadata(:all), do: :all
   defp configure_metadata(metadata), do: Enum.reverse(metadata)
 
-  defp log_event(level, message, _ts, metadata, %State{} = state) do
+  defp log_event(level, message, _ts, metadata, state) do
     metadata = take_metadata(metadata, state.metadata)
     message = Formatter.format_event(message, level, metadata)
 

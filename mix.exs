@@ -8,7 +8,7 @@ defmodule LoggerTelegramBackend.Mixfile do
     [
       app: :logger_telegram_backend,
       version: @version,
-      elixir: "~> 1.12",
+      elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       package: package(),
@@ -35,11 +35,12 @@ defmodule LoggerTelegramBackend.Mixfile do
 
   defp deps do
     [
-      {:logger_backends, "~> 1.0", only: :test},
+      if(System.version() >= "1.15.0", do: {:logger_backends, "~> 1.0"}),
       {:finch, "~> 0.16", optional: true},
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
       {:exvcr, "~> 0.10", only: :test}
     ]
+    |> Enum.reject(&is_nil/1)
   end
 
   defp package do

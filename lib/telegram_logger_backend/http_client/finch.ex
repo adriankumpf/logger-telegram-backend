@@ -7,6 +7,7 @@ defmodule LoggerTelegramBackend.HTTPClient.Finch do
   See `LoggerTelegramBackend` for the available configuration options and
   `LoggerTelegramBackend.HTTPClient` if you wish to use another HTTP client.
   """
+
   @behaviour LoggerTelegramBackend.HTTPClient
 
   @finch_pool_name LoggerTelegramBackend.Finch

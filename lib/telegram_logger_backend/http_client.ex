@@ -12,6 +12,8 @@ defmodule LoggerTelegramBackend.HTTPClient do
 
   """
 
+  @moduledoc since: "3.0.0"
+
   @typedoc """
   HTTP request method.
   """

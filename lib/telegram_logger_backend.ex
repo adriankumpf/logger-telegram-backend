@@ -14,7 +14,13 @@ defmodule LoggerTelegramBackend do
     * `:flush` - when `true`, guarantees all messages currently sent
       to `Logger` are processed before the backend is added
 
+  ## Example
+
+      iex> LoggerTelegramBackend.attach()
+      :ok
+
   """
+  @doc since: "3.0.0"
   @spec attach(keyword) :: Supervisor.on_start_child()
   def attach(opts \\ [])
 
@@ -31,7 +37,13 @@ defmodule LoggerTelegramBackend do
     * `:flush` - when `true`, guarantees all messages currently sent
       to `Logger` are processed before the backend is removed
 
+  ## Example
+
+      iex> LoggerTelegramBackend.detach()
+      :ok
+
   """
+  @doc since: "3.0.0"
   @spec detach(keyword) :: :ok | {:error, term}
   def detach(opts \\ [])
 
@@ -44,7 +56,14 @@ defmodule LoggerTelegramBackend do
   Applies runtime configuration.
 
   See the module doc for more information.
+
+  ## Example
+
+      iex> LoggerTelegramBackend.configure(level: :error)
+      :ok
+
   """
+  @doc since: "3.0.0"
   @spec configure(keyword) :: term
   case System.version() >= "1.15.0" do
     true -> def configure(opts), do: LoggerBackends.configure(__MODULE__, opts)

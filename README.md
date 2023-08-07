@@ -101,13 +101,13 @@ defmodule HackneyClient do
   @hackney_pool_name :logger_telegram_backend_pool
 
   @impl true
-  def child_spec do
+  def child_spec(opts) do
     :hackney_pool.child_spec(@hackney_pool_name, opts)
   end
 
   @impl true
-  def request(method, url, headers, body) do
-    opts = [{:pool, @hackney_pool_name} :with_body]
+  def request(method, url, headers, body, opts) do
+    opts = Keyword.merge(opts, pool: @hackney_pool_name) ++ [:with_body]
 
     case :hackney.request(method, url, headers, body, opts) do
       {:ok, _status, _headers, _body} = result -> result

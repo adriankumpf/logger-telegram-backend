@@ -5,6 +5,7 @@ defmodule LoggerTelegramBackend.Formatter do
 
   @max_length 4096
 
+  @spec format_event(String.t(), atom, keyword) :: String.t()
   def format_event(message, level, metadata) do
     level_str = "[#{level}]"
     metadata_str = format_metadata(metadata)

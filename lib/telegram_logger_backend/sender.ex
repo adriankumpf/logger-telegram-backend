@@ -5,6 +5,7 @@ defmodule LoggerTelegramBackend.Sender do
 
   @user_agent {"user-agent", "LoggerTelegramBackend/#{Mix.Project.config()[:version]}"}
 
+  @spec send_message(String.t(), keyword) :: :ok | {:error, term}
   def send_message(text, opts) when is_binary(text) do
     token = opts[:token] || raise ":token is required"
     chat_id = opts[:chat_id] || raise ":chat_id is required"

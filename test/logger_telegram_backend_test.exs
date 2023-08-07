@@ -71,27 +71,17 @@ defmodule LoggerTelegramBackendTest do
     :ok
   end
 
-  @tag config: [
-         client: TestClient,
-         client_pool_opts: [conn_opts: [{:http, "127.0.0.1", 8888, []}]]
-       ]
-  test "passes the :client_pool_opts to child_spec/1" do
-    assert_receive {:child_spec, [conn_opts: [{:http, "127.0.0.1", 8888, []}]]}
-  end
-
-  @tag config: [
-         client: NoChildSpecTestClient
-       ]
+  @tag config: [client: NoChildSpecTestClient]
   test "allows to return nil from child_spec/1" do
     refute_receive _
   end
 
-  @tag config: [
-         chat_id: "$chat_id",
-         token: "$token",
-         client: TestClient,
-         client_request_opts: [receive_timeout: 5_000]
-       ]
+  @tag config: [client_pool_opts: [conn_opts: [{:http, "127.0.0.1", 8888, []}]]]
+  test "passes the :client_pool_opts to child_spec/1" do
+    assert_receive {:child_spec, [conn_opts: [{:http, "127.0.0.1", 8888, []}]]}
+  end
+
+  @tag config: [client_request_opts: [receive_timeout: 5_000]]
   test "passes the :client_request_opts to request/5" do
     Logger.info("foo")
 
@@ -106,12 +96,7 @@ defmodule LoggerTelegramBackendTest do
 
   @tag config: [level: :error]
   test "can be configured at runtime" do
-    LoggerTelegramBackend.configure(
-      level: :debug,
-      metadata: [:user],
-      chat_id: "$chat_id",
-      token: "$token"
-    )
+    :ok = LoggerTelegramBackend.configure(level: :debug, metadata: [:user])
 
     Logger.debug("foo", user: 1)
 

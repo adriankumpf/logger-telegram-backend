@@ -4,6 +4,8 @@ defmodule LoggerTelegramBackend do
              |> String.split("<!-- MDOC !-->")
              |> Enum.fetch!(1)
 
+  @external_resource "README.md"
+
   @doc """
   Adds the LoggerTelegramBackend backend.
 
@@ -71,9 +73,7 @@ defmodule LoggerTelegramBackend do
   end
 
   @impl :gen_event
-  def handle_event({_level, gl, _event}, state) when node(gl) != node() do
-    {:ok, state}
-  end
+  def handle_event({_level, gl, _event}, state) when node(gl) != node(), do: {:ok, state}
 
   def handle_event({level, _gl, {Logger, message, timestamp, metadata}}, state) do
     if meet_level?(level, state.level) and metadata_matches?(metadata, state.metadata_filter) do
@@ -83,14 +83,10 @@ defmodule LoggerTelegramBackend do
     {:ok, state}
   end
 
-  def handle_event(_event, state) do
-    {:ok, state}
-  end
+  def handle_event(_event, state), do: {:ok, state}
 
   @impl :gen_event
-  def handle_info(_message, state) do
-    {:ok, state}
-  end
+  def handle_info(_message, state), do: {:ok, state}
 
   defp meet_level?(_lvl, nil), do: true
   defp meet_level?(:warn, min), do: meet_level?(:warning, min)
@@ -107,19 +103,13 @@ defmodule LoggerTelegramBackend do
   end
 
   defp initialize(config) do
-    metadata = config[:metadata] || @default_metadata
-    sender_opts = Keyword.take(config, [:token, :chat_id, :client_request_opts])
-
     %{
       level: config[:level],
-      metadata: configure_metadata(metadata),
+      metadata: config[:metadata] || @default_metadata,
       metadata_filter: config[:metadata_filter],
-      sender_opts: sender_opts
+      sender_opts: Keyword.take(config, [:token, :chat_id, :client_request_opts])
     }
   end
-
-  defp configure_metadata(:all), do: :all
-  defp configure_metadata(metadata), do: Enum.reverse(metadata)
 
   defp log_event(level, message, _ts, metadata, state) do
     metadata = take_metadata(metadata, state.metadata)
@@ -133,11 +123,12 @@ defmodule LoggerTelegramBackend do
   defp take_metadata(metadata, :all), do: metadata
 
   defp take_metadata(metadata, keys) do
-    Enum.reduce(keys, [], fn key, acc ->
-      case Keyword.fetch(metadata, key) do
-        {:ok, val} -> [{key, val} | acc]
-        :error -> acc
-      end
-    end)
+    for key <- Enum.reverse(keys), reduce: [] do
+      acc ->
+        case Keyword.fetch(metadata, key) do
+          {:ok, val} -> [{key, val} | acc]
+          :error -> acc
+        end
+    end
   end
 end

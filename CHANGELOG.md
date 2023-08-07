@@ -21,77 +21,56 @@ end
 
 #### Adding the backend
 
-In your `Application.start/2` callback, add the `LoggerTelegramBackend` backend:
+1. In your `Application.start/2` callback, add the `LoggerTelegramBackend` backend:
 
-```elixir
-@impl true
-def start(_type, _args) do
-  LoggerTelegramBackend.attach()
+   ```elixir
+   @impl true
+   def start(_type, _args) do
+     LoggerTelegramBackend.attach()
 
-  # ...
-end
-```
+     # ...
+   end
+   ```
 
-Remove the `:backends` configuration from `:logger`:
+2. Remove the `:backends` configuration from `:logger`:
 
-```elixir
-config :logger,
-  # Remove this line
-  backends: [LoggerTelegramBackend, :console]
-```
+   ```diff
+   config :logger,
+   - backends: [LoggerTelegramBackend, :console]
+   ```
 
 #### Config
 
 Configuration is now done via `config :logger, LoggerTelegramBackend`.
 
-**Before:**
-
-```elixir
-config :logger, :telegram,
-  # ...
-```
-
-**After:**
-
-```elixir
-config :logger, LoggerTelegramBackend,
-  # ...
+```diff
+- config :logger, :telegram,
++ config :logger, LoggerTelegramBackend,
+    # ...
 ```
 
 #### HTTP client (optional)
 
-Remove the `:adapter` configuration:
+1. Remove the `:adapter` configuration and
+2. Add the `:client` option and pass your own module that implements the `LoggerTelegramBackend.HTTPClient` behaviour
 
-```elixir
+```diff
 config :logger, LoggerTelegramBackend,
-  # Remove this line
-  adapter: {Tesla.Adapter.Finch, name: MyFinch}
-```
-
-Add the `:client` option and pass your own module that implements the `LoggerTelegramBackend.HTTPClient` behaviour:
-
-```elixir
-config :logger, LoggerTelegramBackend,
-  client: MyFinchClient
+-  adapter: {Tesla.Adapter.Gun, []}
++  client: MyGunAdapter
 ```
 
 See the documentation for `LoggerTelegramBackend.HTTPClient` and the README for more information.
 
-#### SOCKS5 Proxy (optional)
+#### Proxy (optional)
 
-Remove the `:proxy` configuration:
+1. Remove the `:proxy` configuration
+2. Add the `:client_pool_opts` configuration
 
-```elixir
+```diff
 config :logger, LoggerTelegramBackend,
-  # Remove this line
-  proxy: "socks5://127.0.0.1:9050"
-```
-
-And add the following `:client_pool_opts`:
-
-```elixir
-config :logger, LoggerTelegramBackend,
-  client_pool_opts: [conn_opts: [{:http, "127.0.0.1", 9050, []}]]
+-  proxy: "socks5://127.0.0.1:9050"
++  client_pool_opts: [conn_opts: [{:http, "127.0.0.1", 9050, []}]]
 ```
 
 ## [3.0.0-rc.2] - 2023-08-07
@@ -123,7 +102,6 @@ config :logger, LoggerTelegramBackend,
 
 - Escape metadata fields
 - Fix deprecation warnings
-
 
 ## [2.0.1] - 2021-05-02
 

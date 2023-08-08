@@ -60,7 +60,7 @@ config :logger, LoggerTelegramBackend,
 +  client: MyGunAdapter
 ```
 
-See the documentation for `LoggerTelegramBackend.HTTPClient` and the README for more information.
+See the documentation for `LoggerTelegramBackend.HTTPClient` for more information.
 
 #### Proxy (optional)
 
@@ -70,7 +70,7 @@ See the documentation for `LoggerTelegramBackend.HTTPClient` and the README for 
 ```diff
 config :logger, LoggerTelegramBackend,
 -  proxy: "socks5://127.0.0.1:9050"
-+  client_pool_opts: [conn_opts: [{:http, "127.0.0.1", 9050, []}]]
++  client_pool_opts: [conn_opts: [proxy: {:http, "127.0.0.1", 9050, []}]]
 ```
 
 ## [3.0.0-rc.2] - 2023-08-07

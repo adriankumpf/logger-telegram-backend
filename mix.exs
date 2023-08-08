@@ -13,8 +13,7 @@ defmodule LoggerTelegramBackend.Mixfile do
       deps: deps(),
       package: package(),
       description: "A Logger backend for Telegram",
-      source_url: "https://github.com/adriankumpf/logger-telegram-backend",
-      homepage_url: "https://github.com/adriankumpf/logger-telegram-backend",
+      source_url: @source_url,
       docs: [
         extras: ["README.md", "CHANGELOG.md"],
         source_ref: "#{@version}",

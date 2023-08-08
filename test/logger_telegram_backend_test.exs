@@ -76,9 +76,9 @@ defmodule LoggerTelegramBackendTest do
     refute_receive _
   end
 
-  @tag config: [client_pool_opts: [conn_opts: [{:http, "127.0.0.1", 8888, []}]]]
+  @tag config: [client_pool_opts: [conn_opts: [proxy: {:http, "127.0.0.1", 8888, []}]]]
   test "passes the :client_pool_opts to child_spec/1" do
-    assert_receive {:child_spec, [conn_opts: [{:http, "127.0.0.1", 8888, []}]]}
+    assert_receive {:child_spec, [conn_opts: [proxy: {:http, "127.0.0.1", 8888, []}]]}
   end
 
   @tag config: [client_request_opts: [receive_timeout: 5_000]]

@@ -134,7 +134,7 @@ config :logger, LoggerTelegramBackend,
 config :logger, LoggerTelegramBackend,
   chat_id: "$chatId",
   token: "$botToken",
-  client_pool_opts: [conn_opts: [{:http, "127.0.0.1", 8888, []}]]
+  client_pool_opts: [conn_opts: [proxy: {:http, "127.0.0.1", 8888, []}]]
 ```
 
 See the [Pool Configuration Options](https://hexdocs.pm/finch/Finch.html#start_link/1-pool-configuration-options) for further information.

@@ -32,7 +32,7 @@ def start(_type, _args) do
 end
 ```
 
-Add the following to your production configuration:
+Add the following to your configuration:
 
 ```elixir
 config :logger, LoggerTelegramBackend,

@@ -13,7 +13,7 @@ defmodule LoggerTelegramBackend do
         # ...
       end
 
-  Add the following to your production configuration:
+  Add the following to your configuration:
 
       config :logger, LoggerTelegramBackend,
         chat_id: "your_chat_id",

@@ -23,7 +23,9 @@ defmodule LoggerTelegramBackend do
 
   ### Creating a Telegram bot
 
-  To create a Telegram bot, follow the instructions [here](https://core.telegram.org/bots/features#creating-a-new-bot)  and get the `token` for the bot.
+  To create a Telegram bot, follow the instructions
+  [here](https://core.telegram.org/bots/features#creating-a-new-bot)  and get the `token` for the
+  bot.
 
   Then send a message to the bot and get your `chat_id`:
 
@@ -58,7 +60,8 @@ defmodule LoggerTelegramBackend do
   that is must be present in the metadata for a message to be sent. Defaults to `[]`. See the
   [*Filtering Messages* section](#filtering-messages) below.
 
-  To customize the behaviour of the HTTP client used by LoggerTelegramBackend, you can use these options:
+  To customize the behaviour of the HTTP client used by LoggerTelegramBackend, you can use these
+  options:
 
   - `:client` (`t:module/0`) - A module that implements the `LoggerTelegramBackend.HTTPClient`
   behaviour. Defaults to `LoggerTelegramBackend.HTTPClient.Finch` (requires `:finch`).
@@ -66,8 +69,8 @@ defmodule LoggerTelegramBackend do
   - `:client_pool_opts` (`t:keyword/0`) - Options to configure the HTTP client pool. See
   `Finch.start_link/1`. Defaults to `[]`.
 
-  - `:client_request_opts` (`t:keyword/0`) - Options passed to the `c:LoggerTelegramBackend.HTTPClient.request/5`
-  callback. See `Finch.request/3`. Defaults to `[]`.
+  - `:client_request_opts` (`t:keyword/0`) - Options passed to the
+  `c:LoggerTelegramBackend.HTTPClient.request/5` callback. See `Finch.request/3`. Defaults to `[]`.
 
   ## Filtering messages
 
@@ -90,7 +93,9 @@ defmodule LoggerTelegramBackend do
         # ...
         client_pool_opts: [conn_opts: [proxy: {:http, "127.0.0.1", 8888, []}]]
 
-  See the [Pool Configuration Options](https://hexdocs.pm/finch/Finch.html#start_link/1-pool-configuration-options) for further information.
+  See the [Pool Configuration
+  Options](https://hexdocs.pm/finch/Finch.html#start_link/1-pool-configuration-options) for further
+  information.
   """
 
   @doc """

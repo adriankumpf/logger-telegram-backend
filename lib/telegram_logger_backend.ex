@@ -111,7 +111,6 @@ defmodule LoggerTelegramBackend do
   defp meet_level?(:warn, min), do: meet_level?(:warning, min)
   defp meet_level?(lvl, min), do: Logger.compare_levels(lvl, min) != :lt
 
-  defp metadata_matches?(_metadata, nil), do: true
   defp metadata_matches?(_metadata, []), do: true
 
   defp metadata_matches?(metadata, [{key, value} | rest]) do
@@ -121,11 +120,15 @@ defmodule LoggerTelegramBackend do
     end
   end
 
+  defp metadata_matches?(metadata, [key | rest]) do
+    Keyword.has_key?(metadata, key) and metadata_matches?(metadata, rest)
+  end
+
   defp initialize(config) do
     %{
       level: config[:level],
       metadata: config[:metadata] || @default_metadata,
-      metadata_filter: config[:metadata_filter],
+      metadata_filter: config[:metadata_filter] || [],
       sender_opts: Keyword.take(config, [:token, :chat_id, :client_request_opts])
     }
   end

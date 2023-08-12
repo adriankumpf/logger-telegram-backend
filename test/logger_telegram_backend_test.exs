@@ -213,6 +213,30 @@ defmodule LoggerTelegramBackendTest do
     assert_message_sent()
   end
 
+  @tag config: [metadata_filter: [:foo]]
+  test "allows filtering by the presence of a metadata key" do
+    Logger.debug("dbg: foo")
+    refute_message_sent()
+
+    Logger.info("info: success", foo: :bar)
+    assert_message_sent()
+
+    Logger.info("info: success", foo: :baz)
+    assert_message_sent()
+  end
+
+  @tag config: [metadata_filter: [{:foo, 1}, {:bar, 2}, :baz]]
+  test "requires all filters to be present" do
+    Logger.debug("foo")
+    Logger.error("foo", foo: 1)
+    Logger.error("foo", bar: 2)
+    Logger.error("foo", baz: 3)
+    refute_message_sent()
+
+    Logger.info("success", foo: 1, bar: 2, baz: :anything)
+    assert_message_sent()
+  end
+
   @tag config: [client: ErrorTestClient]
   test "logs warning if sending fails" do
     assert capture_io(:stderr, fn ->

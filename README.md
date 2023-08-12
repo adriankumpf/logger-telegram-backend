@@ -30,7 +30,7 @@ In your `Application.start/2` callback, add the `LoggerTelegramBackend`:
 def start(_type, _args) do
   LoggerTelegramBackend.attach()
 
-# ...
+  # ...
 end
 ```
 
@@ -54,3 +54,7 @@ Then send a message to the bot and get your `chat_id`:
 TOKEN="your_bot_token"
 curl https://api.telegram.org/bot$TOKEN/getUpdates
 ```
+
+## License
+
+This project is Licensed under the [MIT License](LICENSE).

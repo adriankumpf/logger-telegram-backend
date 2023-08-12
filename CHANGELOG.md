@@ -1,19 +1,33 @@
 # Changelog
 
-## 3.0.0 - unreleased
+## [3.0.0] - 12.08.2023
+
+### Breaking Changes
+
+- Migrate built-in HTTP from `hackney` to `Finch`
+- Replace the`:adapter` with the `:client` option
+- Remove the `:proxy` option
+
+### Changes
+
+- Log a warning if sending fails
+- Allow messages to be filtered by a metadata key
+
+### Bug fixes
+
+- Escape metadata fields when sending messages
+- Fix deprecation warnings on Elixir 1.15
 
 ### Upgrade Instructions
 
 #### Dependencies
-
-LoggerTelegramBackend now ships with an HTTP client based on `:finch` instead of `:hackney`.
 
 Add `:finch` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:logger_telegram_backend, "~> 3.0-rc"},
+    {:logger_telegram_backend, "~> 3.0"},
     {:finch, "~> 0.16"},
   ]
 end
@@ -23,13 +37,9 @@ end
 
 1. In your `Application.start/2` callback, add the `LoggerTelegramBackend` backend:
 
-   ```elixir
-   @impl true
+   ```diff
    def start(_type, _args) do
-     LoggerTelegramBackend.attach()
-
-     # ...
-   end
+   +  LoggerTelegramBackend.attach()
    ```
 
 2. Remove the `:backends` configuration from `:logger`:
@@ -41,7 +51,7 @@ end
 
 #### Config
 
-Configuration is now done via `config :logger, LoggerTelegramBackend`.
+Configuration is now done via the `LoggerTelegramBackend` key:
 
 ```diff
 - config :logger, :telegram,
@@ -54,54 +64,26 @@ Configuration is now done via `config :logger, LoggerTelegramBackend`.
 1. Remove the `:adapter` configuration and
 2. Add the `:client` option and pass your own module that implements the `LoggerTelegramBackend.HTTPClient` behaviour
 
-```diff
-config :logger, LoggerTelegramBackend,
--  adapter: {Tesla.Adapter.Gun, []}
-+  client: MyGunAdapter
-```
+   ```diff
+   config :logger, LoggerTelegramBackend,
+   -  adapter: {Tesla.Adapter.Gun, []}
+   +  client: MyGunAdapter
+   ```
 
-See the documentation for `LoggerTelegramBackend.HTTPClient` for more information.
+   See the documentation for `LoggerTelegramBackend.HTTPClient` for more information.
 
 #### Proxy (optional)
 
 1. Remove the `:proxy` configuration
 2. Add the `:client_pool_opts` configuration
 
-```diff
-config :logger, LoggerTelegramBackend,
--  proxy: "socks5://127.0.0.1:9050"
-+  client_pool_opts: [conn_opts: [proxy: {:http, "127.0.0.1", 9050, []}]]
-```
+   ```diff
+   config :logger, LoggerTelegramBackend,
+   -  proxy: "socks5://127.0.0.1:9050"
+   +  client_pool_opts: [conn_opts: [proxy: {:http, "127.0.0.1", 9050, []}]]
+   ```
 
-## [3.0.0-rc.2] - 2023-08-07
-
-- Remove hackney client
-- Pass client opts to callback implementations
-- Set user agent
-- Wrap LoggerBackends functions
-- Run tests on Elixir 1.10 / OTP 21
-
-## [3.0.0-rc.1] - 2023-08-07
-
-### Changes
-
-- Add HTTP client for `Finch`
-
-## [3.0.0-rc.0] - 2023-08-06
-
-### Breaking Changes
-
-- Allow to customize the HTTP client
-- Remove `:proxy` option
-
-### Changes
-
-- Log a warning if sending fails
-
-### Bug fixes
-
-- Escape metadata fields
-- Fix deprecation warnings
+   See [Pool Configuration Options ](https://hexdocs.pm/finch/Finch.html#start_link/1-pool-configuration-options) for further information.
 
 ## [2.0.1] - 2021-05-02
 
@@ -185,9 +167,7 @@ config :logger, LoggerTelegramBackend,
 
 ## [1.0.0] - 2018-01-14
 
-[3.0.0-rc.2]: https://github.com/adriankumpf/logger-telegram-backend/compare/v3.0.0-rc.1...v3.0.0-rc.2
-[3.0.0-rc.1]: https://github.com/adriankumpf/logger-telegram-backend/compare/v3.0.0-rc.0...v3.0.0-rc.1
-[3.0.0-rc.0]: https://github.com/adriankumpf/logger-telegram-backend/compare/v2.0.1...v3.0.0-rc.0
+[3.0.0]: https://github.com/adriankumpf/logger-telegram-backend/compare/v2.0.1...v3.0.0
 [2.0.1]: https://github.com/adriankumpf/logger-telegram-backend/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.3.0...v2.0.0
 [1.3.0]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.2.1...v1.3.0

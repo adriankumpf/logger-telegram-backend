@@ -10,6 +10,30 @@ defmodule LoggerTelegramBackend.HTTPClient do
       config :logger, LoggerTelegramBackend,
         client: MyHTTPClient
 
+  ## Example
+
+  A client implementation based on `:hackney` could look like this:
+
+      defmodule MyHTTPClient do
+        @behaviour LoggerTelegramBackend.HTTPClient
+
+        @hackney_pool_name :logger_telegram_backend_pool
+
+        @impl true
+        def child_spec(opts) do
+          :hackney_pool.child_spec(@hackney_pool_name, opts)
+        end
+
+        @impl true
+        def request(method, url, headers, body, opts) do
+          opts = Keyword.merge(opts, pool: @hackney_pool_name) ++ [:with_body]
+
+          case :hackney.request(method, url, headers, body, opts) do
+            {:ok, _status, _headers, _body} = result -> result
+            {:error, _reason} = error -> error
+          end
+        end
+      end
   """
 
   @moduledoc since: "3.0.0"
@@ -57,7 +81,7 @@ defmodule LoggerTelegramBackend.HTTPClient do
   @callback child_spec(pool_opts) :: Supervisor.child_spec() | nil
 
   @doc """
-  Should make an HTTP request to `url` with the given `method`, `headers` and `body`.
+  Should make an HTTP request to `url` with the given `method`, `headers`, `body` and `req_opts`.
   """
   @callback request(method, url, headers, body, req_opts) ::
               {:ok, status, headers, body} | {:error, term}

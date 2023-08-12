@@ -1,10 +1,97 @@
 defmodule LoggerTelegramBackend do
-  @moduledoc "README.md"
-             |> File.read!()
-             |> String.split("<!-- MDOC !-->")
-             |> Enum.fetch!(1)
+  @moduledoc """
+  A logger backend for [Telegram](https://telegram.org/).
 
-  @external_resource "README.md"
+  ## Usage
+
+  In your `c:Application.start/2` callback, add the `LoggerTelegramBackend`:
+
+      @impl true
+      def start(_type, _args) do
+        LoggerTelegramBackend.attach()
+
+        # ...
+      end
+
+  Add the following to your production configuration:
+
+      config :logger, LoggerTelegramBackend,
+        chat_id: "your_chat_id",
+        token: "yout_bot_token"
+
+  To create a Telegram bot, see the next section.
+
+  ### Creating a Telegram bot
+
+  To create a Telegram bot, follow the instructions [here](https://core.telegram.org/bots/features#creating-a-new-bot)  and get the `token` for the bot.
+
+  Then send a message to the bot and get your `chat_id`:
+
+   ```bash
+   TOKEN="..."
+   curl https://api.telegram.org/bot$TOKEN/getUpdates
+   ```
+
+  ## Configuration
+
+  You can configure LoggerTelegramBackend through the application environment. Configure the
+  following options under the `LoggerTelegramBackend` key of the `:logger` application. For example,
+  you can do this in `config/runtime.exs`:
+
+      # config/runtime.exs
+      config :logger, LoggerTelegramBackend,
+        chat_id: System.fetch_env!("TELEGRAM_CHAT_ID"),
+        token: System.fetch_env!("TELEGRAM_TOKEN"),
+        level: :warning,
+        # ...
+
+  The basic configuration options are:
+
+  - `:level` (`t:Logger.level/0`) - the level to be logged by this backend. Note that messages are
+  first filtered by the general `:level` configuration for the `:logger` application. Defaults to
+  `nil` (all levels are logged).
+
+  - `:metadata` (list of `t:atom/0` or `:all`) - the metadata to be included in the message. `:all`
+  will get all metadata. Defaults to`[:line, :function, :module, :application, :file]`.
+
+  - `:metadata_filter` (`t:keyword/0`, may also include `t:atom/0`) - the key-value pairs or keys
+  that is must be present in the metadata for a message to be sent. Defaults to `[]`. See the
+  [*Filtering Messages* section](#filtering-messages) below.
+
+  To customize the behaviour of the HTTP client used by LoggerTelegramBackend, you can use these options:
+
+  - `:client` (`t:module/0`) - A module that implements the `LoggerTelegramBackend.HTTPClient`
+  behaviour. Defaults to `LoggerTelegramBackend.HTTPClient.Finch` (requires `:finch`).
+
+  - `:client_pool_opts` (`t:keyword/0`) - Options to configure the HTTP client pool. See
+  `Finch.start_link/1`. Defaults to `[]`.
+
+  - `:client_request_opts` (`t:keyword/0`) - Options passed to the `c:LoggerTelegramBackend.HTTPClient.request/5`
+  callback. See `Finch.request/3`. Defaults to `[]`.
+
+  ## Filtering messages
+
+  If you would like to prevent LoggerTelegramBackend from sending certain messages, you can
+  use the `:metadata_filter` configuration option. It must be configured to be a list of key-value
+  pairs or keys.
+
+  ### Examples
+
+  - `metadata_filter: [application: :core]` - The metadata must contain `application: :core`
+  - `metadata_filter: [:user]` - The metadata must contain the key `:user`, but it can be set to any value
+  - `metadata_filter: [{:application, :core}, :user]` - The metadata must contain `application:
+  :core` **AND** must include the key `:user`
+
+  ## Using a proxy
+
+  An HTTP proxy can be configured via the `:client_pool_opts` option:
+
+      config :logger, LoggerTelegramBackend,
+        # ...
+        client_pool_opts: [conn_opts: [proxy: {:http, "127.0.0.1", 8888, []}]]
+
+  See the [Pool Configuration Options](https://hexdocs.pm/finch/Finch.html#start_link/1-pool-configuration-options) for further information.
+  """
 
   @doc """
   Adds the LoggerTelegramBackend backend.

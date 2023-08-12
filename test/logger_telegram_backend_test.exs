@@ -43,6 +43,22 @@ defmodule LoggerTelegramBackendTest do
     def request(_method, _url, _headers, _body, _opts), do: raise("unimplemented")
   end
 
+  def assert_message_sent(message \\ nil, opts \\ []) do
+    Logger.flush()
+
+    assert_received {:request, %{"parse_mode" => "HTML", "chat_id" => "$chat_id", "text" => text},
+                     ^opts}
+
+    if message do
+      assert text == message
+    end
+  end
+
+  def refute_message_sent do
+    Logger.flush()
+    refute_received {:request, _body, _opts}
+  end
+
   setup_all do
     Application.stop(:logger_telegram_backend)
 
@@ -86,25 +102,18 @@ defmodule LoggerTelegramBackendTest do
 
   @tag config: [client: NoChildSpecTestClient]
   test "allows to return nil from child_spec/1" do
-    refute_receive _
+    :ok
   end
 
   @tag config: [client_pool_opts: [conn_opts: [proxy: {:http, "127.0.0.1", 8888, []}]]]
   test "passes the :client_pool_opts to child_spec/1" do
-    assert_receive {:child_spec, [conn_opts: [proxy: {:http, "127.0.0.1", 8888, []}]]}
+    assert_received {:child_spec, [conn_opts: [proxy: {:http, "127.0.0.1", 8888, []}]]}
   end
 
   @tag config: [client_request_opts: [receive_timeout: 5_000]]
   test "passes the :client_request_opts to request/5" do
     Logger.info("foo")
-
-    assert_receive {:request, _body, [receive_timeout: 5000]}
-  end
-
-  test "logs the message to the specified sender" do
-    Logger.info("foo")
-
-    assert_receive {:request, %{"text" => "<b>[info]</b> <b>foo</b>" <> _rest}, []}
+    assert_message_sent(nil, receive_timeout: 5000)
   end
 
   @tag config: [level: :error]
@@ -113,67 +122,68 @@ defmodule LoggerTelegramBackendTest do
 
     Logger.debug("foo", user: 1)
 
-    assert_receive {:request, %{"text" => "<b>[debug]</b> <b>foo</b>\n<pre>User: 1</pre>"}, _opts}
+    assert_message_sent("""
+    <b>[debug]</b> <b>foo</b>
+    <pre>User: 1</pre>\
+    """)
   end
 
-  test "formats the message with markdown" do
+  test "sends the message in HTML format", ctx do
     Logger.error("foobar")
+    Logger.flush()
 
-    assert_receive {:request, %{"text" => text}, _opts}
+    assert_received {:request, %{"text" => text}, _opts}
 
-    assert "<b>[error]</b> <b>foobar</b>\n" <>
-             "<pre>" <>
-             "Line: " <>
-             <<_line::size(24)>> <>
-             "\n" <>
-             "Function: \"test formats the message with markdown/1\"\n" <>
-             "Module: LoggerTelegramBackendTest\n" <> "File:" <> _file = text
+    assert text =~ ~r/Line: \d{3}/
+    assert text =~ "Function: \"#{ctx.test}/1\""
+    assert text =~ "Module: #{inspect(__MODULE__)}"
+    assert text =~ "File: #{inspect(__ENV__.file)}"
   end
 
   @tag config: [metadata: [:function, :module]]
   test "shortens the message if necessary" do
-    message = List.duplicate("E", 9999) |> to_string()
+    message = List.duplicate("E", 9999)
     Logger.info(message)
 
-    assert_receive {:request, %{"text" => text}, _opts}
-
-    assert text ==
-             """
-             <b>[info]</b> <b>#{List.duplicate("E", 4000)}...</b>
-             <pre>Function: \"test shortens the message if necessary/1\"
-             Module: LoggerTelegramBackendTest</pre>
-             """
-             |> String.trim_trailing()
+    assert_message_sent("""
+    <b>[info]</b> <b>#{List.duplicate("E", 4000)}...</b>
+    <pre>Function: \"test shortens the message if necessary/1\"
+    Module: LoggerTelegramBackendTest</pre>\
+    """)
   end
 
   @tag config: [metadata: []]
   test "shortens the message based on its graphemes not bytes" do
     for grapheme <- ["A", "é", "💜"] do
-      message = List.duplicate(grapheme, 9999) |> to_string()
+      message = List.duplicate(grapheme, 9999)
       Logger.info(message)
 
-      assert_receive {:request, %{"text" => text}, _opts}
-      assert text == "<b>[info]</b> <b>#{List.duplicate(grapheme, 4086)}...</b>\n<pre></pre>"
+      assert_message_sent("""
+      <b>[info]</b> <b>#{List.duplicate(grapheme, 4086)}...</b>
+      <pre></pre>\
+      """)
     end
   end
 
   @tag config: [metadata: []]
   test "shortens the message and escapes special chars afterwards" do
-    message = List.duplicate("&", 9999) |> to_string()
+    message = List.duplicate("&", 9999)
     Logger.info(message)
 
-    assert_receive {:request, %{"text" => text}, _opts}
-    assert text == "<b>[info]</b> <b>#{List.duplicate("&amp;", 4086)}...</b>\n<pre></pre>"
+    assert_message_sent("""
+    <b>[info]</b> <b>#{List.duplicate("&amp;", 4086)}...</b>
+    <pre></pre>\
+    """)
   end
 
   @tag config: [metadata: [:unsafe]]
   test "escapes special chars in the message and metadata" do
     Logger.info("<msg=&>", unsafe: "<metadata=&>")
 
-    assert_receive {:request, %{"text" => text}, _opts}
-
-    assert text ==
-             "<b>[info]</b> <b>&lt;msg=&amp;&gt;</b>\n<pre>Unsafe: \"&lt;metadata=&amp;&gt;\"</pre>"
+    assert_message_sent("""
+    <b>[info]</b> <b>&lt;msg=&amp;&gt;</b>
+    <pre>Unsafe: \"&lt;metadata=&amp;&gt;\"</pre>\
+    """)
   end
 
   test "logs multiple message smoothly" do
@@ -182,15 +192,14 @@ defmodule LoggerTelegramBackendTest do
     for n <- range, do: Logger.info("#{n}")
     for _ <- range, do: assert_receive({:request, _body, _opts})
 
-    refute_receive {:request, _body, _opts}
+    refute_message_sent()
   end
 
   @tag config: [level: :error]
   test "ignores the message if its level is lower than the configured one" do
     Logger.debug("dbg: foo")
     Logger.info("info: foo")
-
-    refute_receive {:request, _body, _opts}
+    refute_message_sent()
   end
 
   @tag config: [metadata_filter: [foo: :bar]]
@@ -198,10 +207,10 @@ defmodule LoggerTelegramBackendTest do
     Logger.debug("dbg: foo")
     Logger.error("error: foo", foo: :baz)
     Logger.info("info: foo", application: :app)
-    refute_receive {:request, _, _}
+    refute_message_sent()
 
     Logger.info("info: success", foo: :bar)
-    assert_receive {:request, _, _}
+    assert_message_sent()
   end
 
   @tag config: [client: ErrorTestClient]

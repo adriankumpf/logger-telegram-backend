@@ -19,7 +19,7 @@ defmodule LoggerTelegramBackend.Mixfile do
         source_ref: "#{@version}",
         source_url: @source_url,
         main: "readme",
-        skip_undefined_reference_warnings_on: ["CHANGELOG.md"]
+        skip_undefined_reference_warnings_on: ["CHANGELOG.md", "README.md"]
       ],
       xref: [exclude: [Finch]]
     ]

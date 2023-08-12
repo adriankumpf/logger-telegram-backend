@@ -4,8 +4,6 @@
 [![Docs](https://img.shields.io/badge/hex-docs-green.svg?style=flat)](https://hexdocs.pm/logger_telegram_backend)
 [![Hex.pm](https://img.shields.io/hexpm/v/logger_telegram_backend?color=%23714a94)](http://hex.pm/packages/logger_telegram_backend)
 
-<!-- MDOC !-->
-
 A logger backend for [Telegram](https://telegram.org/).
 
 ## Installation

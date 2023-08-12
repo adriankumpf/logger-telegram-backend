@@ -1,6 +1,7 @@
 defmodule LoggerTelegramBackendTest do
   use ExUnit.Case, async: false
 
+  import ExUnit.CaptureIO
   require Logger
 
   defmodule TestClient do
@@ -17,6 +18,18 @@ defmodule LoggerTelegramBackendTest do
       decoded_body = URI.decode_query(body)
       send(:logger_telegram_backend_test, {:request, decoded_body, opts})
       {:ok, 200, [], []}
+    end
+  end
+
+  defmodule ErrorTestClient do
+    @behaviour LoggerTelegramBackend.HTTPClient
+
+    @impl true
+    def child_spec(_pool_opts), do: Finch.child_spec(name: __MODULE__)
+
+    @impl true
+    def request(_method, _url, _headers, _body, _opts) do
+      {:ok, 503, [], ~s'{"error": "timeout"}'}
     end
   end
 
@@ -189,5 +202,14 @@ defmodule LoggerTelegramBackendTest do
 
     Logger.info("info: success", foo: :bar)
     assert_receive {:request, _, _}
+  end
+
+  @tag config: [client: ErrorTestClient]
+  test "logs warning if sending fails" do
+    assert capture_io(:stderr, fn ->
+             Logger.notice("foo")
+             Logger.flush()
+           end) =~
+             ~s'LoggerTelegramBackend failed to send message: "{\\"error\\": \\"timeout\\"}"'
   end
 end

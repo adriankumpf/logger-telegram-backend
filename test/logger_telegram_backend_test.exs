@@ -240,7 +240,7 @@ defmodule LoggerTelegramBackendTest do
   @tag config: [client: ErrorTestClient]
   test "logs warning if sending fails" do
     assert capture_io(:stderr, fn ->
-             Logger.notice("foo")
+             Logger.info("foo")
              Logger.flush()
            end) =~
              ~s'LoggerTelegramBackend failed to send message: "{\\"error\\": \\"timeout\\"}"'

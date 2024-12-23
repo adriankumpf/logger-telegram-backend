@@ -11,7 +11,7 @@ defmodule LoggerTelegramBackend.Application do
     pool_opts = Config.client_pool_opts()
 
     if client == LoggerTelegramBackend.HTTPClient.Finch do
-      unless Code.ensure_loaded?(Finch) do
+      if not Code.ensure_loaded?(Finch) do
         raise """
         LoggerTelegramBackend failed to start. Add :finch to your dependencies to fix this, or \
         configure a different HTTP client.

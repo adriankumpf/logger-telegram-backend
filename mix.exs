@@ -34,7 +34,7 @@ defmodule LoggerTelegramBackend.Mixfile do
 
   defp deps do
     [
-      if(System.version() >= "1.15.0", do: {:logger_backends, "~> 1.0"}),
+      if(Version.match?(System.version(), ">= 1.15.0"), do: {:logger_backends, "~> 1.0"}),
       {:finch, "~> 0.16", optional: true},
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
       {:exvcr, "~> 0.10", only: :test}

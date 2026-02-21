@@ -1,7 +1,7 @@
 [
   {
     "request": {
-      "body": "text=tach&chat_id=666&parse_mode=Markdown",
+      "body": "text=tach&chat_id=666&parse_mode=HTML",
       "headers": [],
       "method": "post",
       "options": {

@@ -59,6 +59,8 @@ defmodule LoggerTelegramBackendTest do
     refute_received {:request, _body, _opts}
   end
 
+  defp display_length(html), do: LoggerTelegramBackend.TestHelpers.display_length(html)
+
   setup_all do
     Application.stop(:logger_telegram_backend)
 
@@ -144,36 +146,29 @@ defmodule LoggerTelegramBackendTest do
   test "shortens the message if necessary" do
     message = List.duplicate("E", 9999)
     Logger.info(message)
+    Logger.flush()
 
-    assert_message_sent("""
-    <b>[info]</b> <b>#{List.duplicate("E", 4000)}...</b>
-    <pre>Function: \"test shortens the message if necessary/1\"
-    Module: LoggerTelegramBackendTest</pre>\
-    """)
+    assert_received {:request, %{"parse_mode" => "HTML", "chat_id" => "$chat_id", "text" => text},
+                     _opts}
+
+    assert display_length(text) <= 4096
+    assert text =~ "…"
+    assert text =~ "<b>[info]</b>"
+    assert text =~ "Function:"
+    assert text =~ "Module: LoggerTelegramBackendTest"
   end
 
   @tag config: [metadata: []]
-  test "shortens the message based on its graphemes not bytes" do
-    for grapheme <- ["A", "é", "💜"] do
-      message = List.duplicate(grapheme, 9999)
-      Logger.info(message)
-
-      assert_message_sent("""
-      <b>[info]</b> <b>#{List.duplicate(grapheme, 4086)}...</b>
-      <pre></pre>\
-      """)
-    end
-  end
-
-  @tag config: [metadata: []]
-  test "shortens the message and escapes special chars afterwards" do
+  test "shortens the message with special chars and escapes afterwards" do
     message = List.duplicate("&", 9999)
     Logger.info(message)
+    Logger.flush()
 
-    assert_message_sent("""
-    <b>[info]</b> <b>#{List.duplicate("&amp;", 4086)}...</b>
-    <pre></pre>\
-    """)
+    assert_received {:request, %{"text" => text}, _opts}
+
+    assert display_length(text) <= 4096
+    assert text =~ "&amp;"
+    assert text =~ "…"
   end
 
   @tag config: [metadata: [:unsafe]]

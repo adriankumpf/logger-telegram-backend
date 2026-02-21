@@ -8,7 +8,7 @@ defmodule LoggerTelegramBackend do
 
       @impl true
       def start(_type, _args) do
-        LoggerTelegramBackend.attach()
+        {:ok, _} = LoggerTelegramBackend.attach()
 
         # ...
       end
@@ -109,7 +109,7 @@ defmodule LoggerTelegramBackend do
   ## Example
 
       iex> LoggerTelegramBackend.attach()
-      :ok
+      {:ok, _pid}
 
   """
   @doc since: "3.0.0"
@@ -172,15 +172,21 @@ defmodule LoggerTelegramBackend do
   @impl :gen_event
   def init(__MODULE__) do
     config = Application.get_env(:logger, __MODULE__, [])
-    {:ok, initialize(config)}
+    validate_config(config)
   end
 
   @impl :gen_event
-  def handle_call({:configure, config}, _state) do
+  def handle_call({:configure, config}, state) do
     config = Keyword.merge(Application.get_env(:logger, __MODULE__), config)
-    :ok = Application.put_env(:logger, __MODULE__, config)
-    state = initialize(config)
-    {:ok, :ok, state}
+
+    case validate_config(config) do
+      {:ok, new_state} ->
+        :ok = Application.put_env(:logger, __MODULE__, config)
+        {:ok, :ok, new_state}
+
+      {:error, _reason} = error ->
+        {:ok, error, state}
+    end
   end
 
   @impl :gen_event
@@ -214,6 +220,14 @@ defmodule LoggerTelegramBackend do
 
   defp metadata_matches?(metadata, [key | rest]) do
     Keyword.has_key?(metadata, key) and metadata_matches?(metadata, rest)
+  end
+
+  defp validate_config(config) do
+    cond do
+      is_nil(config[:token]) -> {:error, {:missing_config, :token}}
+      is_nil(config[:chat_id]) -> {:error, {:missing_config, :chat_id}}
+      true -> {:ok, initialize(config)}
+    end
   end
 
   defp initialize(config) do

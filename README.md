@@ -26,7 +26,7 @@ In your `Application.start/2` callback, add the `LoggerTelegramBackend`:
 ```elixir
 @impl true
 def start(_type, _args) do
-  LoggerTelegramBackend.attach()
+  {:ok, _pid} = LoggerTelegramBackend.attach()
 
   # ...
 end

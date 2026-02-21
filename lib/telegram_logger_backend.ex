@@ -230,7 +230,7 @@ defmodule LoggerTelegramBackend do
     message = Formatter.format_event(message, level, metadata)
 
     with {:error, reason} <- Sender.send_message(message, state.sender_opts) do
-      IO.warn("#{__MODULE__} failed to send message: #{inspect(reason)}")
+      IO.puts(:stderr, "#{__MODULE__} failed to send message: #{inspect(reason)}")
     end
   end
 

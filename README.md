@@ -13,8 +13,8 @@ Add `:logger_telegram_backend` and `:finch` to your list of dependencies in `mix
 ```elixir
 def deps do
   [
-    {:logger_telegram_backend, "~> 3.0"},
-    {:finch, "~> 0.16"},
+    {:logger_telegram_backend, "~> 4.0"},
+    {:finch, "~> 0.22"},
   ]
 end
 ```

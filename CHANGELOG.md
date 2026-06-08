@@ -1,5 +1,15 @@
 # Changelog
 
+## [4.0.0] - TBD
+
+### Breaking Changes
+
+- Require Elixir 1.15 or later
+
+### Changes
+
+- Require `finch` 0.22 or later when using the built-in HTTP client
+
 ## [3.0.0] - 2023-08-12
 
 ### Breaking Changes
@@ -167,6 +177,7 @@ Configuration is now done via the `LoggerTelegramBackend` key:
 
 ## [1.0.0] - 2018-01-14
 
+[4.0.0]: https://github.com/adriankumpf/logger-telegram-backend/compare/v3.0.0...v4.0.0
 [3.0.0]: https://github.com/adriankumpf/logger-telegram-backend/compare/v2.0.1...v3.0.0
 [2.0.1]: https://github.com/adriankumpf/logger-telegram-backend/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/adriankumpf/logger-telegram-backend/compare/v1.3.0...v2.0.0

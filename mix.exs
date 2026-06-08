@@ -1,14 +1,14 @@
 defmodule LoggerTelegramBackend.Mixfile do
   use Mix.Project
 
-  @version "3.0.0"
+  @version "4.0.0"
   @source_url "https://github.com/adriankumpf/logger-telegram-backend"
 
   def project do
     [
       app: :logger_telegram_backend,
       version: @version,
-      elixir: "~> 1.13",
+      elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -38,12 +38,11 @@ defmodule LoggerTelegramBackend.Mixfile do
 
   defp deps do
     [
-      if(Version.match?(System.version(), ">= 1.15.0"), do: {:logger_backends, "~> 1.0"}),
-      {:finch, "~> 0.16", optional: true},
+      {:logger_backends, "~> 1.0"},
+      {:finch, "~> 0.22", optional: true},
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
       {:exvcr, "~> 0.10", only: :test}
     ]
-    |> Enum.reject(&is_nil/1)
   end
 
   defp package do

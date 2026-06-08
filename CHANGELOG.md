@@ -1,14 +1,27 @@
 # Changelog
 
-## [4.0.0] - TBD
+## [4.0.0] - 2026-06-08
 
 ### Breaking Changes
 
 - Require Elixir 1.15 or later
+- Validate required configuration during backend initialization and return an error when `:token` or
+  `:chat_id` is missing
 
 ### Changes
 
 - Require `finch` 0.22 or later when using the built-in HTTP client
+- Require `logger_backends` 1.0 or later
+- Test compatibility with Elixir 1.18 and OTP 27
+
+### Bug fixes
+
+- Fix message truncation to respect Telegram's 4096-character message limit after HTML parsing
+- Preserve part of the message budget when truncating large metadata payloads
+- Avoid rendering an empty `<pre>` block when no metadata is included
+- Log send failures to stderr without emitting warning stacktrace noise
+- Fix the HTTP client test filename typo
+- Fix README and documentation typos
 
 ## [3.0.0] - 2023-08-12
 

@@ -48,7 +48,9 @@ defmodule LoggerTelegramBackend.Formatter do
   defp format_metadata(metadata) do
     Enum.map_join(metadata, "\n", fn {key, value} ->
       label = key |> to_string() |> String.capitalize()
-      "#{label}: #{inspect(value)}"
+      # `metadata: :all` includes `:crash_reason`, which inspects to a full stacktrace that
+      # truncation would only throw away again.
+      "#{label}: #{inspect(value, limit: 25, printable_limit: @max_length)}"
     end)
   end
 

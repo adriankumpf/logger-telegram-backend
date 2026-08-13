@@ -2,6 +2,8 @@ defmodule LoggerTelegramBackendTest do
   use ExUnit.Case, async: false
 
   import ExUnit.CaptureIO
+  import LoggerTelegramBackend.TestHelpers, only: [display_length: 1]
+
   require Logger
 
   defmodule TestClient do
@@ -58,8 +60,6 @@ defmodule LoggerTelegramBackendTest do
     Logger.flush()
     refute_received {:request, _body, _opts}
   end
-
-  defp display_length(html), do: LoggerTelegramBackend.TestHelpers.display_length(html)
 
   setup_all do
     Application.stop(:logger_telegram_backend)

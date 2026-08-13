@@ -196,17 +196,11 @@ defmodule LoggerTelegramBackend do
   defp meet_level?(:warn, min), do: meet_level?(:warning, min)
   defp meet_level?(lvl, min), do: Logger.compare_levels(lvl, min) != :lt
 
-  defp metadata_matches?(_metadata, []), do: true
-
-  defp metadata_matches?(metadata, [{key, value} | rest]) do
-    case Keyword.fetch(metadata, key) do
-      {:ok, ^value} -> metadata_matches?(metadata, rest)
-      _ -> false
-    end
-  end
-
-  defp metadata_matches?(metadata, [key | rest]) do
-    Keyword.has_key?(metadata, key) and metadata_matches?(metadata, rest)
+  defp metadata_matches?(metadata, filter) do
+    Enum.all?(filter, fn
+      {key, value} -> Keyword.fetch(metadata, key) == {:ok, value}
+      key -> Keyword.has_key?(metadata, key)
+    end)
   end
 
   defp validate_config(config) do
@@ -238,12 +232,11 @@ defmodule LoggerTelegramBackend do
   defp take_metadata(metadata, :all), do: metadata
 
   defp take_metadata(metadata, keys) do
-    for key <- Enum.reverse(keys), reduce: [] do
-      acc ->
-        case Keyword.fetch(metadata, key) do
-          {:ok, val} -> [{key, val} | acc]
-          :error -> acc
-        end
-    end
+    Enum.flat_map(keys, fn key ->
+      case Keyword.fetch(metadata, key) do
+        {:ok, val} -> [{key, val}]
+        :error -> []
+      end
+    end)
   end
 end

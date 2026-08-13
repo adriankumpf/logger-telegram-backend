@@ -16,7 +16,12 @@ defmodule LoggerTelegramBackend.HTTPClient.FinchTest do
 
   test "sends message" do
     use_cassette "send_message" do
-      assert :ok = Sender.send_message("tach", token: "$token", chat_id: "$chatId")
+      assert :ok =
+               Sender.send_message("tach",
+                 client: LoggerTelegramBackend.HTTPClient.Finch,
+                 token: "$token",
+                 chat_id: "$chatId"
+               )
     end
   end
 end

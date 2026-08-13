@@ -10,21 +10,31 @@ defmodule LoggerTelegramBackend.ConfigTest do
     end)
   end
 
-  describe "client/0" do
+  describe "client/1" do
     test "defaults to finch" do
-      assert Config.client() == HTTPClient.Finch
+      assert Config.client([]) == HTTPClient.Finch
     end
 
-    test "read the application config" do
+    test "reads the application config" do
       Application.put_env(:logger, LoggerTelegramBackend, client: MyClient)
-      assert Config.client() == MyClient
+      assert Config.client(Config.all()) == MyClient
     end
   end
 
-  describe "client_pool_opts/0" do
-    test "read the application config" do
+  describe "client_pool_opts/1" do
+    test "defaults to an empty list" do
+      assert Config.client_pool_opts([]) == []
+    end
+
+    test "reads the application config" do
       Application.put_env(:logger, LoggerTelegramBackend, client_pool_opts: [foo: :bar])
-      assert Config.client_pool_opts() == [foo: :bar]
+      assert Config.client_pool_opts(Config.all()) == [foo: :bar]
+    end
+  end
+
+  describe "all/0" do
+    test "defaults to an empty list when unset" do
+      assert Config.all() == []
     end
   end
 end

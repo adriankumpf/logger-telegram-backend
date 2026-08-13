@@ -151,20 +151,18 @@ defmodule LoggerTelegramBackend do
 
   @behaviour :gen_event
 
+  alias LoggerTelegramBackend.Config
   alias LoggerTelegramBackend.Formatter
   alias LoggerTelegramBackend.Sender
 
   @default_metadata [:line, :function, :module, :application, :file]
 
   @impl :gen_event
-  def init(__MODULE__) do
-    config = Application.get_env(:logger, __MODULE__, [])
-    validate_config(config)
-  end
+  def init(__MODULE__), do: validate_config(Config.all())
 
   @impl :gen_event
   def handle_call({:configure, config}, state) do
-    config = Keyword.merge(Application.get_env(:logger, __MODULE__), config)
+    config = Keyword.merge(Config.all(), config)
 
     case validate_config(config) do
       {:ok, new_state} ->
@@ -216,7 +214,12 @@ defmodule LoggerTelegramBackend do
       level: config[:level],
       metadata: config[:metadata] || @default_metadata,
       metadata_filter: config[:metadata_filter] || [],
-      sender_opts: Keyword.take(config, [:token, :chat_id, :client_request_opts])
+      sender_opts: [
+        client: Config.client(config),
+        token: config[:token],
+        chat_id: config[:chat_id],
+        client_request_opts: config[:client_request_opts] || []
+      ]
     }
   end
 

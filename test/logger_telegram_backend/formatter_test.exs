@@ -1,6 +1,8 @@
 defmodule LoggerTelegramBackend.FormatterTest do
   use ExUnit.Case, async: true
 
+  import LoggerTelegramBackend.TestHelpers, only: [display_length: 1]
+
   alias LoggerTelegramBackend.Formatter
 
   describe "format_event/3" do
@@ -150,6 +152,4 @@ defmodule LoggerTelegramBackend.FormatterTest do
       assert display_length("&amp;amp;") == 5
     end
   end
-
-  defp display_length(html), do: LoggerTelegramBackend.TestHelpers.display_length(html)
 end

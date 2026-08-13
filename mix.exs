@@ -22,7 +22,7 @@ defmodule LoggerTelegramBackend.Mixfile do
         main: "readme",
         skip_undefined_reference_warnings_on: ["CHANGELOG.md", "README.md"]
       ],
-      xref: [exclude: [Finch]]
+      elixirc_options: [no_warn_undefined: [Finch]]
     ]
   end
 

@@ -13,10 +13,12 @@ defmodule LoggerTelegramBackend.Formatter do
   @spec format_event(String.t(), atom, keyword) :: String.t()
   def format_event(message, level, metadata) do
     level_tag = "[#{level}]"
-    metadata_text = format_metadata(metadata)
+    budget = @max_length - String.length(level_tag) - separator_cost(metadata)
 
-    budget = @max_length - String.length(level_tag) - separator_cost(metadata_text)
-    metadata_text = truncate(metadata_text, max(budget - @reserved_for_message, 0))
+    metadata_text =
+      metadata
+      |> format_metadata()
+      |> truncate(budget - @reserved_for_message)
 
     message_text =
       message
@@ -24,25 +26,17 @@ defmodule LoggerTelegramBackend.Formatter do
       |> String.trim()
       |> truncate(budget - String.length(metadata_text))
 
-    render(level_tag, message_text, metadata_text)
+    header = "<b>#{level_tag}</b> #{message_text |> HTML.escape() |> highlight_title()}"
+
+    case metadata_text do
+      "" -> header
+      text -> header <> "\n<pre>#{HTML.escape(text)}</pre>"
+    end
   end
 
   # " " between level and message; "\n" before metadata only when present.
-  defp separator_cost(""), do: 1
+  defp separator_cost([]), do: 1
   defp separator_cost(_), do: 2
-
-  defp render(level_tag, message, "") do
-    """
-    <b>#{level_tag}</b> #{message |> HTML.escape() |> highlight_title()}\
-    """
-  end
-
-  defp render(level_tag, message, metadata) do
-    """
-    <b>#{level_tag}</b> #{message |> HTML.escape() |> highlight_title()}
-    <pre>#{HTML.escape(metadata)}</pre>\
-    """
-  end
 
   defp highlight_title(text) do
     case String.split(text, "\n", parts: 2) do
@@ -63,10 +57,12 @@ defmodule LoggerTelegramBackend.Formatter do
   defp truncate(_str, max) when max <= 0, do: ""
 
   defp truncate(str, max) do
-    if String.length(str) <= max do
-      str
-    else
-      String.slice(str, 0, max - 1) <> "…"
+    cond do
+      # A grapheme is never shorter than a byte, so a binary this small always fits. Skips the
+      # O(n) grapheme walk for the common case of a short log message.
+      byte_size(str) <= max -> str
+      String.length(str) <= max -> str
+      true -> String.slice(str, 0, max - 1) <> "…"
     end
   end
 end

@@ -87,12 +87,7 @@ defmodule LoggerTelegramBackendTest do
     start_supervised!(application_child_spec)
     {:ok, _} = LoggerTelegramBackend.attach()
 
-    if Version.match?(System.version(), ">= 1.15.0") do
-      apply(LoggerBackends, :configure, [[truncate: :infinity]])
-    else
-      apply(Logger, :configure, [[truncate: :infinity]])
-      apply(Logger, :remove_backend, [:console])
-    end
+    LoggerBackends.configure(truncate: :infinity)
 
     on_exit(fn ->
       LoggerTelegramBackend.detach()

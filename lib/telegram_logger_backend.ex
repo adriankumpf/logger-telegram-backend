@@ -114,12 +114,7 @@ defmodule LoggerTelegramBackend do
   """
   @doc since: "3.0.0"
   @spec attach(keyword) :: Supervisor.on_start_child()
-  def attach(opts \\ [])
-
-  case Version.match?(System.version(), ">= 1.15.0") do
-    true -> def attach(opts), do: LoggerBackends.add(__MODULE__, opts)
-    false -> def attach(opts), do: Logger.add_backend(__MODULE__, opts)
-  end
+  def attach(opts \\ []), do: LoggerBackends.add(__MODULE__, opts)
 
   @doc """
   Removes the LoggerTelegramBackend backend.
@@ -137,12 +132,7 @@ defmodule LoggerTelegramBackend do
   """
   @doc since: "3.0.0"
   @spec detach(keyword) :: :ok | {:error, term}
-  def detach(opts \\ [])
-
-  case Version.match?(System.version(), ">= 1.15.0") do
-    true -> def detach(opts), do: LoggerBackends.remove(__MODULE__, opts)
-    false -> def detach(opts), do: Logger.remove_backend(__MODULE__, opts)
-  end
+  def detach(opts \\ []), do: LoggerBackends.remove(__MODULE__, opts)
 
   @doc """
   Applies runtime configuration.
@@ -157,10 +147,7 @@ defmodule LoggerTelegramBackend do
   """
   @doc since: "3.0.0"
   @spec configure(keyword) :: term
-  case Version.match?(System.version(), ">= 1.15.0") do
-    true -> def configure(opts), do: LoggerBackends.configure(__MODULE__, opts)
-    false -> def configure(opts), do: Logger.configure_backend(__MODULE__, opts)
-  end
+  def configure(opts), do: LoggerBackends.configure(__MODULE__, opts)
 
   @behaviour :gen_event
 

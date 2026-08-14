@@ -43,7 +43,9 @@ defmodule LoggerTelegramBackend.ConfigTest do
     end
 
     test "accepts every level Logger knows, plus nil and the deprecated :warn" do
-      for level <- [nil, :warn | Logger.levels()] do
+      levels = [:emergency, :alert, :critical, :error, :warning, :notice, :info, :debug]
+
+      for level <- [nil, :warn | levels] do
         config = Config.new(@required ++ [level: level])
         assert :ok = Config.validate(config), "rejected #{inspect(level)}"
       end

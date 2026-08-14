@@ -178,6 +178,8 @@ defmodule LoggerTelegramBackend do
   def handle_event({_level, gl, _event}, state) when node(gl) != node(), do: {:ok, state}
 
   def handle_event({level, _gl, {Logger, message, timestamp, metadata}}, state) do
+    level = event_level(metadata, level)
+
     if meet_level?(level, state.level) and metadata_matches?(metadata, state.metadata_filter) do
       log_event(level, message, timestamp, metadata, state)
     end
@@ -190,9 +192,20 @@ defmodule LoggerTelegramBackend do
   @impl :gen_event
   def handle_info(_message, state), do: {:ok, state}
 
-  defp meet_level?(_lvl, nil), do: true
-  defp meet_level?(:warn, min), do: meet_level?(:warning, min)
-  defp meet_level?(lvl, min), do: Logger.compare_levels(lvl, min) != :lt
+  # `LoggerBackends` collapses the eight `Logger` levels into four before dispatching to a
+  # backend, but keeps the original in the metadata. Recovering it means `:level` and the
+  # rendered tag say what the caller actually wrote. `LoggerBackends.Console` does the same.
+  defp event_level(metadata, collapsed) do
+    Keyword.get_lazy(metadata, :erl_level, fn -> normalize_level(collapsed) end)
+  end
+
+  # `Logger.compare_levels/2` emits a deprecation warning for `:warn`, which would fire on every
+  # single event.
+  defp normalize_level(:warn), do: :warning
+  defp normalize_level(level), do: level
+
+  defp meet_level?(_level, nil), do: true
+  defp meet_level?(level, min), do: Logger.compare_levels(level, min) != :lt
 
   defp metadata_matches?(metadata, filter) do
     Enum.all?(filter, fn
@@ -211,7 +224,7 @@ defmodule LoggerTelegramBackend do
 
   defp initialize(config) do
     %{
-      level: config[:level],
+      level: normalize_level(config[:level]),
       metadata: config[:metadata] || @default_metadata,
       metadata_filter: config[:metadata_filter] || [],
       sender_opts: [

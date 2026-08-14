@@ -29,7 +29,9 @@ defmodule LoggerTelegramBackend.Config do
           client_request_opts: keyword
         }
 
-  @levels [nil | Logger.levels()]
+  # Written out rather than taken from `Logger.levels/0`, which only exists since Elixir 1.16.
+  # Severity order also reads better in the error message than the order that function returns.
+  @levels [nil, :emergency, :alert, :critical, :error, :warning, :notice, :info, :debug]
 
   @spec read() :: keyword
   def read, do: Application.get_env(:logger, LoggerTelegramBackend, [])

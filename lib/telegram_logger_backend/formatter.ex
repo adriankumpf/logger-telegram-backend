@@ -10,6 +10,10 @@ defmodule LoggerTelegramBackend.Formatter do
   # Reserve this many characters so the actual log message is never starved.
   @reserved_for_message 50
 
+  # `metadata: :all` includes `:crash_reason`, which inspects to a full stacktrace that
+  # truncation would only throw away again. No single value can usefully outgrow a whole message.
+  @inspect_opts [limit: 25, printable_limit: @max_length]
+
   @spec format_event(String.t(), atom, keyword) :: String.t()
   def format_event(message, level, metadata) do
     level_tag = "[#{level}]"
@@ -48,9 +52,7 @@ defmodule LoggerTelegramBackend.Formatter do
   defp format_metadata(metadata) do
     Enum.map_join(metadata, "\n", fn {key, value} ->
       label = key |> to_string() |> String.capitalize()
-      # `metadata: :all` includes `:crash_reason`, which inspects to a full stacktrace that
-      # truncation would only throw away again.
-      "#{label}: #{inspect(value, limit: 25, printable_limit: @max_length)}"
+      "#{label}: #{inspect(value, @inspect_opts)}"
     end)
   end
 
@@ -58,13 +60,11 @@ defmodule LoggerTelegramBackend.Formatter do
   # without specifying grapheme vs code point — we assume graphemes.
   defp truncate(_str, max) when max <= 0, do: ""
 
+  # A grapheme is never shorter than a byte, so a binary this small always fits. Skips the
+  # O(n) grapheme walk for the common case of a short log message.
+  defp truncate(str, max) when byte_size(str) <= max, do: str
+
   defp truncate(str, max) do
-    cond do
-      # A grapheme is never shorter than a byte, so a binary this small always fits. Skips the
-      # O(n) grapheme walk for the common case of a short log message.
-      byte_size(str) <= max -> str
-      String.length(str) <= max -> str
-      true -> String.slice(str, 0, max - 1) <> "…"
-    end
+    if String.length(str) <= max, do: str, else: String.slice(str, 0, max - 1) <> "…"
   end
 end

@@ -22,6 +22,7 @@
   `metadata: :all`, for example) no longer uses up the whole message
 - Document every configuration option, message filtering and the caveats of logging to Telegram in
   the README, which is now also the module documentation
+- Test compatibility with Elixir 1.20 and OTP 29
 
 ### Bug fixes
 

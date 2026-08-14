@@ -22,4 +22,21 @@ defmodule LoggerTelegramBackend.InitTest do
 
     assert {:error, {{:missing_config, :token}, _}} = LoggerTelegramBackend.attach()
   end
+
+  test "the handler state never exposes the token" do
+    Application.put_env(:logger, LoggerTelegramBackend,
+      token: "s3cr3t-bot-token",
+      chat_id: "$chat_id"
+    )
+
+    assert {:ok, _} = LoggerTelegramBackend.attach()
+
+    on_exit(fn -> LoggerTelegramBackend.detach() end)
+
+    {:status, _pid, _mod, status} = :sys.get_status(LoggerBackends)
+    refute inspect(status, limit: :infinity, printable_limit: :infinity) =~ "s3cr3t-bot-token"
+
+    state = :sys.get_state(LoggerBackends)
+    refute inspect(state, limit: :infinity, printable_limit: :infinity) =~ "s3cr3t-bot-token"
+  end
 end

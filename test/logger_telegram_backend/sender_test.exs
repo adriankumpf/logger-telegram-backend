@@ -2,6 +2,7 @@ defmodule LoggerTelegramBackend.SenderTest do
   use ExUnit.Case, async: true
 
   alias LoggerTelegramBackend.Sender
+  alias LoggerTelegramBackend.Token
 
   defmodule TestClient do
     @behaviour LoggerTelegramBackend.HTTPClient
@@ -18,7 +19,7 @@ defmodule LoggerTelegramBackend.SenderTest do
 
   setup do
     Process.register(self(), :sender_test)
-    {:ok, opts: [client: TestClient, token: "$token", chat_id: "$chatId"]}
+    {:ok, opts: [client: TestClient, token: Token.new("$token"), chat_id: "$chatId"]}
   end
 
   test "requires the chat_id", ctx do

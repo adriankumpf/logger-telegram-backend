@@ -4,18 +4,28 @@
 
 ### Changes
 
+- Report missing or invalid configuration as a `LoggerTelegramBackend.ConfigError` with a message
+  explaining how to fix it, instead of a bare `{:missing_config, key}` tuple. `attach/1` and
+  `configure/1` now return the exception struct, so code matching on `{:missing_config, key}` needs
+  updating
+- Validate `:level`, `:metadata` and `:metadata_filter` when the backend is attached or
+  reconfigured, rather than accepting them and crashing on the first event. `:token` must be a
+  string. Setting an option to `nil` still means "use the default"
 - Filter and render events by the level the caller actually used. `LoggerBackends` collapses the
   eight `Logger` levels into four before a backend sees them, so `level: :critical` used to discard
-  everything, including `Logger.emergency/1`. All eight levels now work as expected
-- Report missing or invalid configuration as a `LoggerTelegramBackend.ConfigError` with a message
-  explaining how to fix it, instead of a bare `{:missing_config, key}` tuple
-- Validate `:metadata` and `:metadata_filter` when the backend is attached, rather than crashing on
-  the first event
+  everything, including `Logger.emergency/1`. All eight levels now work as expected, and the tag in
+  the message shows the level the caller logged with
+- Accept the deprecated `level: :warn` as `:warning` instead of emitting a deprecation warning for
+  every event
 - Keep the bot token out of crash reports, `:sys.get_state/1` and failure messages written to stderr
+- Bound the inspect output of individual metadata values, so one large term (`:crash_reason` under
+  `metadata: :all`, for example) no longer uses up the whole message
+- Document every configuration option, message filtering and the caveats of logging to Telegram in
+  the README, which is now also the module documentation
 
 ### Bug fixes
 
-- Keep the backend attached when the configured HTTP client raises
+- Keep the backend attached when the configured HTTP client raises, throws or exits
 
 ## [4.0.0] - 2026-06-08
 

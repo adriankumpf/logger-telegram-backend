@@ -1,7 +1,7 @@
 defmodule LoggerTelegramBackend.Mixfile do
   use Mix.Project
 
-  @version "4.0.0"
+  @version "4.1.0"
   @source_url "https://github.com/adriankumpf/logger-telegram-backend"
 
   def project do

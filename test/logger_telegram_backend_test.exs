@@ -58,6 +58,16 @@ defmodule LoggerTelegramBackendTest do
     def request(_method, _url, _headers, _body, _opts), do: raise("unimplemented")
   end
 
+  defmodule RaisingTestClient do
+    @behaviour LoggerTelegramBackend.HTTPClient
+
+    @impl true
+    def child_spec(_pool_opts), do: nil
+
+    @impl true
+    def request(_method, url, _headers, _body, _opts), do: raise("boom while requesting #{url}")
+  end
+
   def assert_message_sent(message \\ nil, opts \\ []) do
     Logger.flush()
 
@@ -238,6 +248,16 @@ defmodule LoggerTelegramBackendTest do
 
     Logger.info("success", foo: 1, bar: 2, baz: :anything)
     assert_message_sent()
+  end
+
+  @tag config: [client: RaisingTestClient]
+  test "keeps the backend attached when the client raises" do
+    assert capture_io(:stderr, fn ->
+             Logger.info("foo")
+             Logger.flush()
+           end) =~ "LoggerTelegramBackend failed to send message: %RuntimeError{"
+
+    assert LoggerTelegramBackend in :gen_event.which_handlers(LoggerBackends)
   end
 
   @tag config: [client: TokenLeakingTestClient, token: "s3cr3t-bot-token"]

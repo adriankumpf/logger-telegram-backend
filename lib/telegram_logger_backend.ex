@@ -214,19 +214,26 @@ defmodule LoggerTelegramBackend do
     end)
   end
 
+  # Nothing in here may raise. `LoggerBackends` supervises the handler and re-adds it after a
+  # crash, and the resulting crash report is itself an error event this backend receives, so a
+  # raise turns into a loop that drowns out the log it was meant to forward.
   defp log_event(level, message, _ts, metadata, state) do
     metadata = take_metadata(metadata, state.metadata)
-    message = Formatter.format_event(message, level, metadata)
+    text = Formatter.format_event(message, level, metadata)
 
-    with {:error, reason} <- Sender.send_message(message, state) do
+    with {:error, reason} <- Sender.send_message(text, state) do
       report_failure(reason, state.token)
     end
+  rescue
+    exception -> report_failure(exception, state.token)
+  catch
+    kind, reason -> report_failure({kind, reason}, state.token)
   end
 
   # Reported to stderr rather than through `Logger`, which would feed straight back into this
   # backend.
   defp report_failure(reason, token) do
-    message = "#{__MODULE__} failed to send message: #{inspect(reason)}"
+    message = "#{inspect(__MODULE__)} failed to send message: #{inspect(reason)}"
     IO.puts(:stderr, Token.redact(message, token))
   end
 

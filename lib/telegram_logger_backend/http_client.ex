@@ -38,29 +38,10 @@ defmodule LoggerTelegramBackend.HTTPClient do
 
   @moduledoc since: "3.0.0"
 
-  @typedoc """
-  HTTP request method.
-  """
   @type method :: atom
-
-  @typedoc """
-  HTTP request URL.
-  """
   @type url :: String.t()
-
-  @typedoc """
-  HTTP response status.
-  """
   @type status :: 100..599
-
-  @typedoc """
-  HTTP request or response headers.
-  """
   @type headers :: [{String.t(), String.t()}]
-
-  @typedoc """
-  HTTP request or response body.
-  """
   @type body :: binary()
 
   @typedoc """

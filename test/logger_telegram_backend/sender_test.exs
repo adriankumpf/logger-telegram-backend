@@ -1,8 +1,8 @@
 defmodule LoggerTelegramBackend.SenderTest do
   use ExUnit.Case, async: true
 
+  alias LoggerTelegramBackend.Config
   alias LoggerTelegramBackend.Sender
-  alias LoggerTelegramBackend.Token
 
   defmodule TestClient do
     @behaviour LoggerTelegramBackend.HTTPClient
@@ -19,29 +19,11 @@ defmodule LoggerTelegramBackend.SenderTest do
 
   setup do
     Process.register(self(), :sender_test)
-    {:ok, opts: [client: TestClient, token: Token.new("$token"), chat_id: "$chatId"]}
-  end
-
-  test "requires the chat_id", ctx do
-    assert_raise RuntimeError, ":chat_id is required", fn ->
-      Sender.send_message("foo", Keyword.delete(ctx.opts, :chat_id))
-    end
-  end
-
-  test "requires the token", ctx do
-    assert_raise RuntimeError, ":token is required", fn ->
-      Sender.send_message("foo", Keyword.delete(ctx.opts, :token))
-    end
-  end
-
-  test "requires the client", ctx do
-    assert_raise RuntimeError, ":client is required", fn ->
-      Sender.send_message("foo", Keyword.delete(ctx.opts, :client))
-    end
+    {:ok, config: Config.new(client: TestClient, token: "$token", chat_id: "$chatId")}
   end
 
   test "encodes the body", ctx do
-    :ok = Sender.send_message("foo", ctx.opts)
+    :ok = Sender.send_message("foo", ctx.config)
 
     assert_receive {:request, :post, "https://api.telegram.org/bot$token/sendMessage", headers,
                     body, _opts}
@@ -56,7 +38,7 @@ defmodule LoggerTelegramBackend.SenderTest do
   end
 
   test "sends a user agent", ctx do
-    :ok = Sender.send_message("foo", ctx.opts)
+    :ok = Sender.send_message("foo", ctx.config)
     assert_receive {:request, _method, _url, headers, _body, _opts}
 
     assert {_, "LoggerTelegramBackend/" <> version} = List.keyfind(headers, "user-agent", 0)
@@ -64,7 +46,8 @@ defmodule LoggerTelegramBackend.SenderTest do
   end
 
   test "passes the :client_request_opts to the client", ctx do
-    :ok = Sender.send_message("foo", [client_request_opts: [receive_timeout: 5000]] ++ ctx.opts)
+    config = %{ctx.config | client_request_opts: [receive_timeout: 5000]}
+    :ok = Sender.send_message("foo", config)
 
     assert_receive {:request, _method, _url, _headers, _body, [receive_timeout: 5000]}
   end

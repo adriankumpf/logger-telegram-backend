@@ -1,26 +1,29 @@
 defmodule LoggerTelegramBackend.InitTest do
   use ExUnit.Case, async: false
 
+  alias LoggerTelegramBackend.ConfigError
+
   setup do
     on_exit(fn -> Application.delete_env(:logger, LoggerTelegramBackend) end)
   end
 
-  test "attach/1 returns error when :token is missing" do
+  test "attach/1 returns an actionable error when the configuration is incomplete" do
     Application.put_env(:logger, LoggerTelegramBackend, chat_id: "$chat_id")
 
-    assert {:error, {{:missing_config, :token}, _}} = LoggerTelegramBackend.attach()
+    assert {:error, {%ConfigError{message: message}, _}} = LoggerTelegramBackend.attach()
+    assert message =~ ":token is missing"
+    assert message =~ "config :logger, LoggerTelegramBackend"
   end
 
-  test "attach/1 returns error when :chat_id is missing" do
-    Application.put_env(:logger, LoggerTelegramBackend, token: "$token")
+  test "attach/1 returns an error for an unknown :level" do
+    Application.put_env(:logger, LoggerTelegramBackend,
+      token: "$token",
+      chat_id: "$chat_id",
+      level: :bogus
+    )
 
-    assert {:error, {{:missing_config, :chat_id}, _}} = LoggerTelegramBackend.attach()
-  end
-
-  test "attach/1 returns error when config is empty" do
-    Application.put_env(:logger, LoggerTelegramBackend, [])
-
-    assert {:error, {{:missing_config, :token}, _}} = LoggerTelegramBackend.attach()
+    assert {:error, {%ConfigError{message: message}, _}} = LoggerTelegramBackend.attach()
+    assert message =~ "invalid :level :bogus"
   end
 
   test "the handler state never exposes the token" do

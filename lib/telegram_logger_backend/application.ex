@@ -4,15 +4,15 @@ defmodule LoggerTelegramBackend.Application do
   use Application
 
   alias LoggerTelegramBackend.Config
+  alias LoggerTelegramBackend.HTTPClient
 
   @impl true
   def start(_type, _opts) do
-    config = Config.all()
-    client = Config.client(config)
+    config = Config.new(Config.read())
 
-    if client == LoggerTelegramBackend.HTTPClient.Finch, do: ensure_finch_started!()
+    if config.client == HTTPClient.Finch, do: ensure_finch_started!()
 
-    children = List.wrap(client.child_spec(Config.client_pool_opts(config)))
+    children = List.wrap(config.client.child_spec(config.client_pool_opts))
 
     Supervisor.start_link(children,
       strategy: :one_for_one,

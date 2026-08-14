@@ -98,6 +98,14 @@ defmodule LoggerTelegramBackend do
   information.
   """
 
+  @behaviour :gen_event
+
+  alias LoggerTelegramBackend.Config
+  alias LoggerTelegramBackend.ConfigError
+  alias LoggerTelegramBackend.Formatter
+  alias LoggerTelegramBackend.Sender
+  alias LoggerTelegramBackend.Token
+
   @doc """
   Adds the LoggerTelegramBackend backend.
 
@@ -146,29 +154,25 @@ defmodule LoggerTelegramBackend do
 
   """
   @doc since: "3.0.0"
-  @spec configure(keyword) :: term
+  @spec configure(keyword) :: :ok | {:error, ConfigError.t()}
   def configure(opts), do: LoggerBackends.configure(__MODULE__, opts)
 
-  @behaviour :gen_event
+  @impl :gen_event
+  def init(__MODULE__) do
+    config = Config.new(Config.read())
 
-  alias LoggerTelegramBackend.Config
-  alias LoggerTelegramBackend.Formatter
-  alias LoggerTelegramBackend.Sender
-  alias LoggerTelegramBackend.Token
-
-  @default_metadata [:line, :function, :module, :application, :file]
+    with :ok <- Config.validate(config), do: {:ok, config}
+  end
 
   @impl :gen_event
-  def init(__MODULE__), do: validate_config(Config.all())
+  def handle_call({:configure, opts}, state) do
+    env = Keyword.merge(Config.read(), opts)
+    config = Config.new(env)
 
-  @impl :gen_event
-  def handle_call({:configure, config}, state) do
-    config = Keyword.merge(Config.all(), config)
-
-    case validate_config(config) do
-      {:ok, new_state} ->
-        :ok = Application.put_env(:logger, __MODULE__, config)
-        {:ok, :ok, new_state}
+    case Config.validate(config) do
+      :ok ->
+        :ok = Application.put_env(:logger, __MODULE__, env)
+        {:ok, :ok, config}
 
       {:error, _reason} = error ->
         {:ok, error, state}
@@ -197,13 +201,8 @@ defmodule LoggerTelegramBackend do
   # backend, but keeps the original in the metadata. Recovering it means `:level` and the
   # rendered tag say what the caller actually wrote. `LoggerBackends.Console` does the same.
   defp event_level(metadata, collapsed) do
-    Keyword.get_lazy(metadata, :erl_level, fn -> normalize_level(collapsed) end)
+    Keyword.get_lazy(metadata, :erl_level, fn -> Config.normalize_level(collapsed) end)
   end
-
-  # `Logger.compare_levels/2` emits a deprecation warning for `:warn`, which would fire on every
-  # single event.
-  defp normalize_level(:warn), do: :warning
-  defp normalize_level(level), do: level
 
   defp meet_level?(_level, nil), do: true
   defp meet_level?(level, min), do: Logger.compare_levels(level, min) != :lt
@@ -215,34 +214,12 @@ defmodule LoggerTelegramBackend do
     end)
   end
 
-  defp validate_config(config) do
-    cond do
-      is_nil(config[:token]) -> {:error, {:missing_config, :token}}
-      is_nil(config[:chat_id]) -> {:error, {:missing_config, :chat_id}}
-      true -> {:ok, initialize(config)}
-    end
-  end
-
-  defp initialize(config) do
-    %{
-      level: normalize_level(config[:level]),
-      metadata: config[:metadata] || @default_metadata,
-      metadata_filter: config[:metadata_filter] || [],
-      sender_opts: [
-        client: Config.client(config),
-        token: Token.new(config[:token]),
-        chat_id: config[:chat_id],
-        client_request_opts: config[:client_request_opts] || []
-      ]
-    }
-  end
-
   defp log_event(level, message, _ts, metadata, state) do
     metadata = take_metadata(metadata, state.metadata)
     message = Formatter.format_event(message, level, metadata)
 
-    with {:error, reason} <- Sender.send_message(message, state.sender_opts) do
-      report_failure(reason, state.sender_opts[:token])
+    with {:error, reason} <- Sender.send_message(message, state) do
+      report_failure(reason, state.token)
     end
   end
 

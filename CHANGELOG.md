@@ -1,5 +1,22 @@
 # Changelog
 
+## [Unreleased]
+
+### Changes
+
+- Filter and render events by the level the caller actually used. `LoggerBackends` collapses the
+  eight `Logger` levels into four before a backend sees them, so `level: :critical` used to discard
+  everything, including `Logger.emergency/1`. All eight levels now work as expected
+- Report missing or invalid configuration as a `LoggerTelegramBackend.ConfigError` with a message
+  explaining how to fix it, instead of a bare `{:missing_config, key}` tuple
+- Validate `:metadata` and `:metadata_filter` when the backend is attached, rather than crashing on
+  the first event
+- Keep the bot token out of crash reports, `:sys.get_state/1` and failure messages written to stderr
+
+### Bug fixes
+
+- Keep the backend attached when the configured HTTP client raises
+
 ## [4.0.0] - 2026-06-08
 
 ### Breaking Changes

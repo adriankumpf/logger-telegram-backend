@@ -89,11 +89,11 @@ defmodule LoggerTelegramBackend do
   @impl :gen_event
   def handle_event({_level, gl, _event}, state) when node(gl) != node(), do: {:ok, state}
 
-  def handle_event({level, _gl, {Logger, message, timestamp, metadata}}, state) do
+  def handle_event({level, _gl, {Logger, message, _timestamp, metadata}}, state) do
     level = event_level(metadata, level)
 
     if meet_level?(level, state.level) and metadata_matches?(metadata, state.metadata_filter) do
-      log_event(level, message, timestamp, metadata, state)
+      log_event(level, message, metadata, state)
     end
 
     {:ok, state}
@@ -124,7 +124,7 @@ defmodule LoggerTelegramBackend do
   # Nothing in here may raise. `LoggerBackends` supervises the handler and re-adds it after a
   # crash, and the resulting crash report is itself an error event this backend receives, so a
   # raise turns into a loop that drowns out the log it was meant to forward.
-  defp log_event(level, message, _ts, metadata, state) do
+  defp log_event(level, message, metadata, state) do
     metadata = take_metadata(metadata, state.metadata)
     text = Formatter.format_event(message, level, metadata)
 
@@ -149,7 +149,7 @@ defmodule LoggerTelegramBackend do
   defp take_metadata(metadata, keys) do
     Enum.flat_map(keys, fn key ->
       case Keyword.fetch(metadata, key) do
-        {:ok, val} -> [{key, val}]
+        {:ok, value} -> [{key, value}]
         :error -> []
       end
     end)

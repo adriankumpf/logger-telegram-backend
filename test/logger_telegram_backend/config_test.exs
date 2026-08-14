@@ -24,6 +24,10 @@ defmodule LoggerTelegramBackend.ConfigTest do
       assert Config.new(nope: true) == Config.new([])
     end
 
+    test "treats a nil value as unset" do
+      assert Config.new(metadata: nil, metadata_filter: nil, client: nil) == Config.new([])
+    end
+
     test "wraps the token" do
       assert %Config{token: %Token{}} = Config.new(@required)
     end
@@ -70,7 +74,7 @@ defmodule LoggerTelegramBackend.ConfigTest do
     end
 
     test "rejects invalid :metadata" do
-      for metadata <- [nil, "all", ["line"]] do
+      for metadata <- ["all", ["line"], %{}] do
         assert {:error, %ConfigError{message: message}} =
                  (@required ++ [metadata: metadata]) |> Config.new() |> Config.validate()
 
@@ -79,7 +83,7 @@ defmodule LoggerTelegramBackend.ConfigTest do
     end
 
     test "rejects invalid :metadata_filter" do
-      for filter <- [nil, %{}, ["user"]] do
+      for filter <- [%{}, ["user"], :user] do
         assert {:error, %ConfigError{message: message}} =
                  (@required ++ [metadata_filter: filter]) |> Config.new() |> Config.validate()
 

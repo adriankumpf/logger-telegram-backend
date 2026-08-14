@@ -154,6 +154,7 @@ defmodule LoggerTelegramBackend do
   alias LoggerTelegramBackend.Config
   alias LoggerTelegramBackend.Formatter
   alias LoggerTelegramBackend.Sender
+  alias LoggerTelegramBackend.Token
 
   @default_metadata [:line, :function, :module, :application, :file]
 
@@ -229,7 +230,7 @@ defmodule LoggerTelegramBackend do
       metadata_filter: config[:metadata_filter] || [],
       sender_opts: [
         client: Config.client(config),
-        token: config[:token],
+        token: Token.new(config[:token]),
         chat_id: config[:chat_id],
         client_request_opts: config[:client_request_opts] || []
       ]
@@ -241,8 +242,15 @@ defmodule LoggerTelegramBackend do
     message = Formatter.format_event(message, level, metadata)
 
     with {:error, reason} <- Sender.send_message(message, state.sender_opts) do
-      IO.puts(:stderr, "#{__MODULE__} failed to send message: #{inspect(reason)}")
+      report_failure(reason, state.sender_opts[:token])
     end
+  end
+
+  # Reported to stderr rather than through `Logger`, which would feed straight back into this
+  # backend.
+  defp report_failure(reason, token) do
+    message = "#{__MODULE__} failed to send message: #{inspect(reason)}"
+    IO.puts(:stderr, Token.redact(message, token))
   end
 
   defp take_metadata(metadata, :all), do: metadata

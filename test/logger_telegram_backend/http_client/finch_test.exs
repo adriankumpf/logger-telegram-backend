@@ -3,6 +3,7 @@ defmodule LoggerTelegramBackend.HTTPClient.FinchTest do
   use ExVCR.Mock, adapter: ExVCR.Adapter.Finch
 
   alias LoggerTelegramBackend.Sender
+  alias LoggerTelegramBackend.Token
 
   setup do
     ExVCR.Config.cassette_library_dir("test/fixture/vcr_cassettes")
@@ -19,7 +20,7 @@ defmodule LoggerTelegramBackend.HTTPClient.FinchTest do
       assert :ok =
                Sender.send_message("tach",
                  client: LoggerTelegramBackend.HTTPClient.Finch,
-                 token: "$token",
+                 token: Token.new("$token"),
                  chat_id: "$chatId"
                )
     end

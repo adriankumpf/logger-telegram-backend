@@ -35,6 +35,19 @@ defmodule LoggerTelegramBackendTest do
     end
   end
 
+  defmodule TokenLeakingTestClient do
+    @behaviour LoggerTelegramBackend.HTTPClient
+
+    @impl true
+    def child_spec(_pool_opts), do: nil
+
+    # Mirrors what Mint reports for a malformed token: the request URL, token and all.
+    @impl true
+    def request(_method, url, _headers, _body, _opts) do
+      {:error, {:invalid_request_target, url}}
+    end
+  end
+
   defmodule NoChildSpecTestClient do
     @behaviour LoggerTelegramBackend.HTTPClient
 
@@ -225,6 +238,18 @@ defmodule LoggerTelegramBackendTest do
 
     Logger.info("success", foo: 1, bar: 2, baz: :anything)
     assert_message_sent()
+  end
+
+  @tag config: [client: TokenLeakingTestClient, token: "s3cr3t-bot-token"]
+  test "redacts the token from failure reports" do
+    output =
+      capture_io(:stderr, fn ->
+        Logger.info("foo")
+        Logger.flush()
+      end)
+
+    refute output =~ "s3cr3t-bot-token"
+    assert output =~ "[REDACTED]"
   end
 
   describe "levels" do

@@ -22,9 +22,9 @@ defmodule LoggerTelegramBackend.FormatterTest do
     end
 
     test "escapes HTML in message" do
-      result = Formatter.format_event("<script>alert('xss')</script>", :warn, [])
+      result = Formatter.format_event("<script>alert('xss')</script>", :warning, [])
 
-      assert result == "<b>[warn]</b> <b>&lt;script&gt;alert('xss')&lt;/script&gt;</b>"
+      assert result == "<b>[warning]</b> <b>&lt;script&gt;alert('xss')&lt;/script&gt;</b>"
     end
 
     test "escapes HTML in metadata values" do

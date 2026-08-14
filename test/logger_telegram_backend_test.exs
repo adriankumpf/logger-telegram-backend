@@ -227,6 +227,39 @@ defmodule LoggerTelegramBackendTest do
     assert_message_sent()
   end
 
+  describe "levels" do
+    test "renders the level the caller actually used" do
+      Logger.emergency("boom")
+      Logger.flush()
+
+      assert_received {:request, %{"text" => text}, _opts}
+      assert text =~ "<b>[emergency]</b>"
+    end
+
+    @tag config: [level: :critical]
+    test "filters on the level the caller actually used" do
+      Logger.error("dropped")
+      Logger.warning("dropped")
+      refute_message_sent()
+
+      Logger.alert("kept")
+      Logger.flush()
+      assert_received {:request, %{"text" => text}, _opts}
+      assert text =~ "<b>[alert]</b>"
+    end
+
+    @tag config: [level: :warn]
+    test "accepts the deprecated :warn as a synonym for :warning" do
+      Logger.info("dropped")
+      refute_message_sent()
+
+      Logger.warning("kept")
+      Logger.flush()
+      assert_received {:request, %{"text" => text}, _opts}
+      assert text =~ "<b>[warning]</b>"
+    end
+  end
+
   @tag config: [client: ErrorTestClient]
   test "logs warning if sending fails" do
     assert capture_io(:stderr, fn ->

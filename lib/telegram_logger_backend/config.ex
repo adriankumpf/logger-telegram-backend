@@ -36,7 +36,9 @@ defmodule LoggerTelegramBackend.Config do
 
   @spec new(keyword) :: t
   def new(env) do
-    config = struct(__MODULE__, env)
+    # A nil value means "not set" and falls back to the default, which is how the options behaved
+    # before they were validated.
+    config = struct(__MODULE__, Enum.reject(env, &match?({_key, nil}, &1)))
     %{config | level: normalize_level(config.level), token: wrap_token(config.token)}
   end
 
